@@ -160,7 +160,7 @@ git commit -m "feat: scaffold Vite + TanStack Router + Tailwind frontend"
 - Create: `worker/tsconfig.json`
 - Create: `worker/src/index.ts`
 
-- [ ] **Step 1: Create Worker project**
+- [x] **Step 1: Create Worker project**
 
 ```bash
 cd /e/code/github/resume/site-crawler
@@ -171,7 +171,7 @@ npm install fflate node-html-parser jose
 npm install -D @cloudflare/workers-types typescript
 ```
 
-- [ ] **Step 2: Write `worker/tsconfig.json`**
+- [x] **Step 2: Write `worker/tsconfig.json`**
 
 ```json
 {
@@ -187,7 +187,7 @@ npm install -D @cloudflare/workers-types typescript
 }
 ```
 
-- [ ] **Step 3: Write `worker/wrangler.toml`**
+- [x] **Step 3: Write `worker/wrangler.toml`**
 
 ```toml
 name = "site-crawler-worker"
@@ -206,7 +206,7 @@ FRONTEND_ORIGIN = "https://site-crawler.pages.dev"
 # JWT_SECRET
 ```
 
-- [ ] **Step 4: Write skeleton `worker/src/index.ts`**
+- [x] **Step 4: Write skeleton `worker/src/index.ts`**
 
 ```ts
 export interface Env {
@@ -244,14 +244,14 @@ export default {
 }
 ```
 
-- [ ] **Step 5: Verify Worker typechecks**
+- [x] **Step 5: Verify Worker typechecks**
 
 ```bash
 cd worker && npx tsc --noEmit
 ```
 Expected: No errors
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add worker/
