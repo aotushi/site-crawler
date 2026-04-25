@@ -1,0 +1,14 @@
+name = "site-crawler-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "site-crawler-db"
+database_id = "REPLACE_WITH_REAL_ID"
+
+[vars]
+FRONTEND_ORIGIN = "https://site-crawler.pages.dev"
+
+# Secrets (set via wrangler secret put):
+# JWT_SECRET
