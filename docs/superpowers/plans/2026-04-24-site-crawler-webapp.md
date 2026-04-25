@@ -63,7 +63,7 @@
 - Create: `app/src/main.tsx`
 - Create: `app/index.html`
 
-- [ ] **Step 1: Scaffold Vite + React project**
+- [x] **Step 1: Scaffold Vite + React project**
 
 ```bash
 cd /e/code/github/resume/site-crawler
@@ -72,7 +72,7 @@ cd app
 npm install
 ```
 
-- [ ] **Step 2: Install dependencies**
+- [x] **Step 2: Install dependencies**
 
 ```bash
 npm install @tanstack/react-router @tanstack/router-vite-plugin
@@ -80,7 +80,7 @@ npm install tailwindcss @tailwindcss/vite
 npm install -D @tanstack/router-devtools
 ```
 
-- [ ] **Step 3: Write `app/vite.config.ts`**
+- [x] **Step 3: Write `app/vite.config.ts`**
 
 ```ts
 import { defineConfig } from 'vite'
@@ -97,7 +97,7 @@ export default defineConfig({
 })
 ```
 
-- [ ] **Step 4: Write `app/tailwind.config.ts`**
+- [x] **Step 4: Write `app/tailwind.config.ts`**
 
 ```ts
 import type { Config } from 'tailwindcss'
@@ -107,7 +107,7 @@ export default {
 } satisfies Config
 ```
 
-- [ ] **Step 5: Write `app/src/main.tsx`**
+- [x] **Step 5: Write `app/src/main.tsx`**
 
 ```tsx
 import { StrictMode } from 'react'
@@ -129,20 +129,20 @@ createRoot(document.getElementById('root')!).render(
 )
 ```
 
-- [ ] **Step 6: Write `app/src/index.css` (Tailwind entry)**
+- [x] **Step 6: Write `app/src/index.css` (Tailwind entry)**
 
 ```css
 @import "tailwindcss";
 ```
 
-- [ ] **Step 7: Verify dev server starts**
+- [x] **Step 7: Verify dev server starts**
 
 ```bash
 cd app && npm run dev
 ```
 Expected: Vite server running at http://localhost:5173
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git init
