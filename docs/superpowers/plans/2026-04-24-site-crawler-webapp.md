@@ -435,7 +435,7 @@ git commit -m "feat: add zh/en i18n message map and useLang hook"
 - Create: `app/src/components/NavBar.tsx`
 - Create: `app/src/components/Footer.tsx`
 
-- [ ] **Step 1: Write `app/src/components/NavBar.tsx`**
+- [x] **Step 1: Write `app/src/components/NavBar.tsx`**
 
 ```tsx
 import { Link } from '@tanstack/react-router'
@@ -484,7 +484,7 @@ export function NavBar() {
 }
 ```
 
-- [ ] **Step 2: Write `app/src/components/Footer.tsx`**
+- [x] **Step 2: Write `app/src/components/Footer.tsx`**
 
 ```tsx
 import { useLang } from '../lib/i18n'
@@ -499,7 +499,7 @@ export function Footer() {
 }
 ```
 
-- [ ] **Step 3: Write `app/src/routes/__root.tsx`**
+- [x] **Step 3: Write `app/src/routes/__root.tsx`**
 
 ```tsx
 import { createRootRoute, Outlet } from '@tanstack/react-router'
@@ -525,7 +525,7 @@ function RootLayout() {
 export const Route = createRootRoute({ component: RootLayout })
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add app/src/routes/__root.tsx app/src/components/
@@ -709,7 +709,7 @@ git commit -m "feat: add landing page — Hero, HowItWorks, CaseStudies"
 - Create: `worker/src/db/schema.sql`
 - Create: `worker/src/db/queries.ts`
 
-- [ ] **Step 1: Write `worker/src/db/schema.sql`**
+- [x] **Step 1: Write `worker/src/db/schema.sql`**
 
 ```sql
 CREATE TABLE IF NOT EXISTS users (
@@ -731,7 +731,7 @@ CREATE TABLE IF NOT EXISTS crawl_history (
 );
 ```
 
-- [ ] **Step 2: Create D1 database and apply schema**
+- [x] **Step 2: Create D1 database and apply schema**
 
 ```bash
 cd worker
@@ -741,7 +741,7 @@ npx wrangler d1 create site-crawler-db
 npx wrangler d1 execute site-crawler-db --local --file=src/db/schema.sql
 ```
 
-- [ ] **Step 3: Write `worker/src/db/queries.ts`**
+- [x] **Step 3: Write `worker/src/db/queries.ts`**
 
 ```ts
 import type { Env } from '../index'
@@ -799,7 +799,7 @@ export async function getCrawlHistory(db: D1Database, userId: string): Promise<C
 }
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add worker/src/db/
@@ -929,7 +929,7 @@ git commit -m "feat: add JWT auth — sign/verify + register/login handlers"
 - Create: `app/src/routes/auth/login.tsx`
 - Create: `app/src/routes/auth/register.tsx`
 
-- [ ] **Step 1: Write `app/src/lib/auth.ts`**
+- [x] **Step 1: Write `app/src/lib/auth.ts`**
 
 ```ts
 const TOKEN_KEY = 'sc_token'
@@ -947,7 +947,7 @@ export function clearToken(): void {
 }
 ```
 
-- [ ] **Step 2: Write `app/src/lib/api.ts`**
+- [x] **Step 2: Write `app/src/lib/api.ts`**
 
 ```ts
 import { getToken } from './auth'
@@ -967,13 +967,13 @@ export async function fetchWorker(path: string, init?: RequestInit): Promise<Res
 }
 ```
 
-- [ ] **Step 3: Create `app/.env.local` for local dev**
+- [x] **Step 3: Create `app/.env.local` for local dev**
 
 ```
 VITE_WORKER_URL=http://localhost:8787
 ```
 
-- [ ] **Step 4: Write `app/src/routes/auth/login.tsx`**
+- [x] **Step 4: Write `app/src/routes/auth/login.tsx`**
 
 ```tsx
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
@@ -1032,7 +1032,7 @@ function LoginPage() {
 export const Route = createFileRoute('/auth/login')({ component: LoginPage })
 ```
 
-- [ ] **Step 5: Write `app/src/routes/auth/register.tsx`** (mirror of login with register endpoint)
+- [x] **Step 5: Write `app/src/routes/auth/register.tsx`** (mirror of login with register endpoint)
 
 ```tsx
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
@@ -1091,7 +1091,7 @@ function RegisterPage() {
 export const Route = createFileRoute('/auth/register')({ component: RegisterPage })
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/lib/auth.ts app/src/lib/api.ts app/src/routes/auth/ app/.env.local
@@ -1361,7 +1361,7 @@ git commit -m "feat: add ZIP builder and recursive crawl engine (depth=2, max 20
 - Create: `worker/src/crawl/handler.ts`
 - Modify: `worker/src/index.ts`
 
-- [ ] **Step 1: Write `worker/src/crawl/handler.ts`**
+- [x] **Step 1: Write `worker/src/crawl/handler.ts`**
 
 ```ts
 import type { Env } from '../index'
@@ -1439,7 +1439,7 @@ export async function handleCrawl(request: Request, env: Env): Promise<Response>
 }
 ```
 
-- [ ] **Step 2: Write history handler inline in `worker/src/index.ts`**
+- [x] **Step 2: Write history handler inline in `worker/src/index.ts`**
 
 Replace the skeleton `index.ts` with the full router:
 
@@ -1495,7 +1495,7 @@ export default {
 }
 ```
 
-- [ ] **Step 3: Start Worker locally and test crawl**
+- [x] **Step 3: Start Worker locally and test crawl**
 
 ```bash
 cd worker && npx wrangler dev
@@ -1510,7 +1510,7 @@ curl -X POST http://localhost:8787/api/crawl \
 ```
 Expected: `test.zip` created, ~1-2 files inside.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add worker/src/

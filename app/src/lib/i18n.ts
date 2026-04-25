@@ -1,0 +1,138 @@
+import { createContext, useContext, useState } from 'react'
+
+export type Lang = 'zh' | 'en'
+
+export const messages = {
+  zh: {
+    nav_crawl: '开始爬取',
+    nav_history: '历史记录',
+    nav_login: '登录',
+    nav_register: '注册',
+    nav_logout: '退出',
+    hero_title: '静态网站一键下载工具',
+    hero_subtitle: '输入任意静态网站地址，自动抓取全部资源并打包成 ZIP 文件下载。',
+    hero_placeholder: '输入目标网站 URL，例如 https://example.com',
+    hero_cta: '开始爬取',
+    how_title: '三步完成网站备份',
+    how_step1_title: '输入网址',
+    how_step1_desc: '粘贴目标网站的完整 URL，支持任意静态或 SSR 渲染的网站。',
+    how_step2_title: '后台爬取',
+    how_step2_desc: '服务器自动抓取所有 HTML、CSS、JS、图片等资源，无需在本地安装任何软件。',
+    how_step3_title: '下载 ZIP',
+    how_step3_desc: '爬取完成后，浏览器自动触发下载，文件结构与原站保持一致。',
+    case_title: '使用案例',
+    case1_name: '游戏门户备份',
+    case1_desc: '抓取 hot5games 门户页、游戏图标、JSON 数据，用于搭建镜像站点。',
+    case2_name: '企业官网归档',
+    case2_desc: '保存企业官网的完整快照，包含所有静态资源，方便离线查阅。',
+    footer_desc: '静态网站爬取工具 · 开源 · 部署于 Cloudflare',
+    crawl_title: '爬取任务',
+    crawl_url_label: '目标网站 URL',
+    crawl_start: '开始爬取',
+    crawl_running: '爬取中...',
+    crawl_done: '爬取完成',
+    crawl_failed: '爬取失败',
+    crawl_download: '下载 ZIP',
+    crawl_files: '已抓取文件',
+    crawl_size: '打包大小',
+    crawl_js_warning: '检测到该网站依赖 JavaScript 动态渲染，内容可能不完整。建议改用本地 Playwright 工具进行完整抓取。',
+    crawl_leave_confirm: '爬取任务正在进行中，离开页面将中断任务。确定要离开吗？',
+    history_title: '爬取历史',
+    history_empty: '暂无历史记录',
+    history_url: '网址',
+    history_status: '状态',
+    history_files: '文件数',
+    history_size: '大小',
+    history_time: '时间',
+    login_title: '登录',
+    login_email: '邮箱',
+    login_password: '密码',
+    login_submit: '登录',
+    login_no_account: '还没有账号？',
+    register_title: '注册',
+    register_email: '邮箱',
+    register_password: '密码',
+    register_submit: '注册',
+    register_has_account: '已有账号？',
+    error_invalid_url: '请输入有效的网站 URL（以 http:// 或 https:// 开头）',
+    error_auth_required: '请先登录后再查看历史记录',
+  },
+  en: {
+    nav_crawl: 'Crawl',
+    nav_history: 'History',
+    nav_login: 'Login',
+    nav_register: 'Register',
+    nav_logout: 'Logout',
+    hero_title: 'Download Any Static Website in One Click',
+    hero_subtitle: "Enter a URL and we'll crawl the entire site, packaging all assets into a ZIP file ready to download.",
+    hero_placeholder: 'Enter target URL, e.g. https://example.com',
+    hero_cta: 'Start Crawling',
+    how_title: 'Three Steps to Back Up Any Site',
+    how_step1_title: 'Enter the URL',
+    how_step1_desc: 'Paste the full URL of any static or SSR-rendered website.',
+    how_step2_title: 'Server-Side Crawl',
+    how_step2_desc: 'Our server fetches all HTML, CSS, JS, and images. No local software required.',
+    how_step3_title: 'Download ZIP',
+    how_step3_desc: 'Browser auto-downloads a ZIP preserving the original file structure.',
+    case_title: 'Use Cases',
+    case1_name: 'Game Portal Backup',
+    case1_desc: 'Mirror a game portal including thumbnails, JSON data, and all assets.',
+    case2_name: 'Corporate Site Archive',
+    case2_desc: 'Snapshot a company website with all static resources for offline review.',
+    footer_desc: 'Static Site Crawler · Open Source · Powered by Cloudflare',
+    crawl_title: 'Crawl Job',
+    crawl_url_label: 'Target URL',
+    crawl_start: 'Start Crawling',
+    crawl_running: 'Crawling...',
+    crawl_done: 'Done',
+    crawl_failed: 'Failed',
+    crawl_download: 'Download ZIP',
+    crawl_files: 'Files fetched',
+    crawl_size: 'ZIP size',
+    crawl_js_warning: 'This site appears to require JavaScript rendering. Content may be incomplete. Consider using Playwright locally for a full crawl.',
+    crawl_leave_confirm: 'A crawl is in progress. Leaving will cancel it. Are you sure?',
+    history_title: 'Crawl History',
+    history_empty: 'No history yet',
+    history_url: 'URL',
+    history_status: 'Status',
+    history_files: 'Files',
+    history_size: 'Size',
+    history_time: 'Time',
+    login_title: 'Login',
+    login_email: 'Email',
+    login_password: 'Password',
+    login_submit: 'Login',
+    login_no_account: "Don't have an account?",
+    register_title: 'Register',
+    register_email: 'Email',
+    register_password: 'Password',
+    register_submit: 'Register',
+    register_has_account: 'Already have an account?',
+    error_invalid_url: 'Please enter a valid URL starting with http:// or https://',
+    error_auth_required: 'Please log in to view your crawl history',
+  },
+} satisfies Record<Lang, Record<string, string>>
+
+export type MessageKey = keyof typeof messages.zh
+
+interface LangContextValue {
+  lang: Lang
+  setLang: (l: Lang) => void
+  t: (key: MessageKey) => string
+}
+
+export const LangContext = createContext<LangContextValue>({
+  lang: 'zh',
+  setLang: () => {},
+  t: (key) => messages.zh[key],
+})
+
+export function useLangProvider() {
+  const [lang, setLang] = useState<Lang>('zh')
+  const t = (key: MessageKey) => messages[lang][key]
+  return { lang, setLang, t }
+}
+
+export function useLang() {
+  return useContext(LangContext)
+}

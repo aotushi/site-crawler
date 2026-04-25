@@ -6,3 +6,5 @@
 - 中英双语, 默认中文
 - 是否需要提供用户登录功能, 需要进一步交流确认
 - 网站部署CF, 使用tanstack+vite, 加上tailwindcss来实现
+
+## the Previous conversation
