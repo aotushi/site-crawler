@@ -542,7 +542,7 @@ git commit -m "feat: add root layout, NavBar, Footer with lang switcher"
 - Create: `app/src/components/CaseStudies.tsx`
 - Create: `app/src/routes/index.tsx`
 
-- [ ] **Step 1: Write `app/src/components/Hero.tsx`**
+- [x] **Step 1: Write `app/src/components/Hero.tsx`**
 
 ```tsx
 import { useState } from 'react'
@@ -597,7 +597,7 @@ export function Hero() {
 }
 ```
 
-- [ ] **Step 2: Write `app/src/components/HowItWorks.tsx`**
+- [x] **Step 2: Write `app/src/components/HowItWorks.tsx`**
 
 ```tsx
 import { useLang } from '../lib/i18n'
@@ -627,7 +627,7 @@ export function HowItWorks() {
 }
 ```
 
-- [ ] **Step 3: Write `app/src/components/CaseStudies.tsx`**
+- [x] **Step 3: Write `app/src/components/CaseStudies.tsx`**
 
 ```tsx
 import { useLang } from '../lib/i18n'
@@ -660,7 +660,7 @@ export function CaseStudies() {
 }
 ```
 
-- [ ] **Step 4: Write `app/src/routes/index.tsx`**
+- [x] **Step 4: Write `app/src/routes/index.tsx`**
 
 ```tsx
 import { createFileRoute } from '@tanstack/react-router'
@@ -685,14 +685,14 @@ export const Route = createFileRoute('/')({
 })
 ```
 
-- [ ] **Step 5: Verify landing page renders**
+- [x] **Step 5: Verify landing page renders**
 
 ```bash
 cd app && npm run dev
 ```
 Open http://localhost:5173 — should show hero + 3-step section + cases.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/components/ app/src/routes/index.tsx
@@ -1528,7 +1528,7 @@ git commit -m "feat: complete Worker with crawl, auth, and history endpoints"
 - Create: `app/src/components/CrawlProgress.tsx`
 - Create: `app/src/routes/crawl.tsx`
 
-- [ ] **Step 1: Write `app/src/lib/crawl-state.ts`**
+- [x] **Step 1: Write `app/src/lib/crawl-state.ts`**
 
 ```ts
 const KEY = 'sc_crawl'
@@ -1556,7 +1556,7 @@ export function clearCrawlState(): void {
 }
 ```
 
-- [ ] **Step 2: Write `app/src/components/CrawlProgress.tsx`**
+- [x] **Step 2: Write `app/src/components/CrawlProgress.tsx`**
 
 ```tsx
 import { useLang } from '../lib/i18n'
@@ -1621,7 +1621,7 @@ export function CrawlProgress({ status, fileCount, totalBytes, jsWarning, onDown
 }
 ```
 
-- [ ] **Step 3: Write `app/src/routes/crawl.tsx`**
+- [x] **Step 3: Write `app/src/routes/crawl.tsx`**
 
 ```tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -1759,7 +1759,7 @@ export const Route = createFileRoute('/crawl')({
 })
 ```
 
-- [ ] **Step 4: Verify full flow works locally**
+- [x] **Step 4: Verify full flow works locally**
 
 ```bash
 # Terminal 1: Worker
@@ -1771,7 +1771,7 @@ cd app && npm run dev
 
 Open http://localhost:5173, enter `https://example.com`, click Start — should show progress then download prompt.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/lib/crawl-state.ts app/src/components/CrawlProgress.tsx app/src/routes/crawl.tsx
@@ -1785,7 +1785,7 @@ git commit -m "feat: add crawl UI with progress, beforeunload guard, ZIP downloa
 **Files:**
 - Create: `app/src/routes/history.tsx`
 
-- [ ] **Step 1: Write `app/src/routes/history.tsx`**
+- [x] **Step 1: Write `app/src/routes/history.tsx`**
 
 ```tsx
 import { createFileRoute, redirect } from '@tanstack/react-router'
@@ -1860,7 +1860,7 @@ export const Route = createFileRoute('/history')({
 })
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add app/src/routes/history.tsx
