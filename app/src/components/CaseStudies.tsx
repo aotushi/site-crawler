@@ -1,4 +1,4 @@
-import { useLang, MessageKey } from '../lib/i18n'
+import { useLang, type MessageKey } from '../lib/i18n'
 
 const cases: { titleKey: MessageKey; descKey: MessageKey; tag: string }[] = [
   { titleKey: 'case1_name', descKey: 'case1_desc', tag: 'hot5games' },
@@ -8,7 +8,7 @@ const cases: { titleKey: MessageKey; descKey: MessageKey; tag: string }[] = [
 export function CaseStudies() {
   const { t } = useLang()
   return (
-    <section className="bg-gray-50 py-16 px-4">
+    <section className="py-16 px-4">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">{t('case_title')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

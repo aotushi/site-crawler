@@ -5,7 +5,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "site-crawler-db"
-database_id = "REPLACE_WITH_REAL_ID"
+database_id = "d79e138c-b877-456f-9389-e68afb2f7bcb"
 
 [vars]
 FRONTEND_ORIGIN = "https://site-crawler.pages.dev"
