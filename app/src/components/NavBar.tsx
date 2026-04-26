@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
-import { useLang, type Lang } from "../lib/i18n";
-import { getToken, clearToken } from "../lib/auth";
+import { Link } from '@tanstack/react-router'
+import { useLang, type Lang } from '../lib/i18n'
+import { getToken, clearToken } from '../lib/auth'
 
 export function NavBar() {
   const { lang, setLang, t } = useLang();
