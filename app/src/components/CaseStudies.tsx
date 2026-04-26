@@ -1,4 +1,4 @@
-import { useLang, MessageKey } from '../lib/i18n'
+import { useLang, type MessageKey } from '../lib/i18n'
 
 const cases: { titleKey: MessageKey; descKey: MessageKey; tag: string }[] = [
   { titleKey: 'case1_name', descKey: 'case1_desc', tag: 'hot5games' },

@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { MaterialIcon } from './MaterialIcon'
 

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { useLang, Lang } from '../lib/i18n'
+import { useLang, type Lang } from '../lib/i18n'
 import { getToken, clearToken } from '../lib/auth'
 
 export function NavBar() {

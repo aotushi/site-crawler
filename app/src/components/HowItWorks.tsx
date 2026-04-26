@@ -1,4 +1,4 @@
-import { useLang, MessageKey } from '../lib/i18n'
+import { useLang, type MessageKey } from '../lib/i18n'
 
 const steps: { icon: string; titleKey: MessageKey; descKey: MessageKey }[] = [
   { icon: '🔗', titleKey: 'how_step1_title', descKey: 'how_step1_desc' },
