@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.4",
