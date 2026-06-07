@@ -5,6 +5,19 @@ export interface ParsedAssets {
   assets: string[]  // static assets to download (CSS, JS, images, etc.)
 }
 
+// 解码属性值里常见的 HTML 实体（如内联 style 中的 &quot;），否则 url() 解析会被污染
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*34;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#0*39;/g, "'")
+    .replace(/&amp;/g, '&')
+}
+
+// 从任意字符串（如 data-settings JSON）里兜底抽取直链媒体/资源 URL
+const MEDIA_URL_RE = /https?:\/\/[^\s"'()\\]+?\.(?:jpe?g|png|gif|webp|avif|svg|ico|bmp|mp4|webm|ogv|ogg|mov|m4v|woff2?|ttf|otf|eot|css|js)(?:\?[^\s"'()\\]*)?/gi
+
 export function parseAssets(html: string, baseUrl: string): ParsedAssets {
   const base = new URL(baseUrl)
   const root = parse(html)
@@ -89,6 +102,41 @@ export function parseAssets(html: string, baseUrl: string): ParsedAssets {
       if (!val) continue
       const url = resolveAsset(val)
       if (url) assets.push(url)
+    }
+  }
+
+  // 内联 style 属性里的 background-image / url(...)（命中 Elementor 幻灯片背景等）
+  for (const el of root.querySelectorAll('[style]')) {
+    const style = el.getAttribute('style')
+    if (!style || !style.includes('url(')) continue
+    for (const u of parseCssUrls(decodeEntities(style), baseUrl)) assets.push(u)
+  }
+
+  // <style> 标签内嵌 CSS 的 url(...)
+  for (const el of root.querySelectorAll('style')) {
+    const css = el.text
+    if (!css || !css.includes('url(')) continue
+    for (const u of parseCssUrls(decodeEntities(css), baseUrl)) assets.push(u)
+  }
+
+  // 兜底：扫描所有元素的 data-* 属性（如 Elementor data-settings JSON、data-bg 等）
+  for (const el of root.querySelectorAll('*')) {
+    const attrs = el.attributes
+    for (const name in attrs) {
+      if (!name.startsWith('data-')) continue
+      const val = attrs[name]
+      if (!val) continue
+      const decoded = decodeEntities(val)
+      if (decoded.includes('url(')) {
+        for (const u of parseCssUrls(decoded, baseUrl)) assets.push(u)
+      }
+      const matches = decoded.match(MEDIA_URL_RE)
+      if (matches) {
+        for (const m of matches) {
+          const url = resolveAsset(m)
+          if (url) assets.push(url)
+        }
+      }
     }
   }
 
