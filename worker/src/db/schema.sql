@@ -13,5 +13,7 @@ CREATE TABLE IF NOT EXISTS crawl_history (
   file_count INTEGER,
   zip_size INTEGER,
   created_at INTEGER NOT NULL,
-  completed_at INTEGER
+  completed_at INTEGER,
+  gh_run_id TEXT,
+  crawl_type TEXT NOT NULL DEFAULT 'static'
 );

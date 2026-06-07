@@ -2,11 +2,15 @@ import { handleRegister, handleLogin } from './auth/handlers'
 import { verifyToken, extractBearer } from './auth/jwt'
 import { getCrawlHistory } from './db/queries'
 import { handleCrawl } from './crawl/handler'
+import { handleJsTrigger, handleJsStatus } from './crawl/js-handler'
 
 export interface Env {
   DB: D1Database
   JWT_SECRET: string
   FRONTEND_ORIGIN: string
+  GITHUB_TOKEN: string
+  CRAWL_BUCKET: R2Bucket
+  R2_PUBLIC_BASE: string
 }
 
 export default {
@@ -29,13 +33,23 @@ export default {
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     }
 
-    const { pathname } = new URL(request.url)
+    let { pathname } = new URL(request.url)
+    // 生产环境通过路由绑定 api.9shi.cc/crawler/* 访问，pathname 带 /crawler 前缀
+    // 本地 wrangler dev 直接访问 localhost:8787，pathname 不带前缀
+    if (pathname.startsWith('/crawler/')) pathname = pathname.slice('/crawler'.length)
 
     if (pathname === '/api/auth/register' && request.method === 'POST') {
       return handleRegister(request, env)
     }
     if (pathname === '/api/auth/login' && request.method === 'POST') {
       return handleLogin(request, env)
+    }
+    if (pathname === '/api/crawl/js/trigger' && request.method === 'POST') {
+      return handleJsTrigger(request, env, corsHeaders)
+    }
+    const jsStatusMatch = pathname.match(/^\/api\/crawl\/js\/status\/(\d+)$/)
+    if (jsStatusMatch && request.method === 'GET') {
+      return handleJsStatus(request, env, corsHeaders, jsStatusMatch[1])
     }
     if (pathname === '/api/crawl' && request.method === 'POST') {
       return handleCrawl(request, env, corsHeaders)
