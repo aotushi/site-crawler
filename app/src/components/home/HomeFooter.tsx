@@ -1,36 +1,41 @@
+import { Link } from '@tanstack/react-router'
+import { useLang } from '../../lib/i18n'
+
 export function HomeFooter() {
+  const { t } = useLang()
   return (
-    <footer className="w-full border-t bg-slate-50 border-slate-200">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 py-16 px-6 text-sm text-slate-500">
+    <footer className="w-full border-t border-[var(--sc-border)] bg-[var(--sc-bg)] text-[var(--sc-muted)]">
+      <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-6 py-16 text-sm md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <div className="text-lg font-bold text-slate-900 mb-4">SiteCrawler</div>
-          <p className="mb-6 opacity-80">The premier tool for professional web archiving and site preservation.</p>
+          <div className="mb-4 flex items-center gap-2 text-lg font-semibold text-[var(--sc-strong)]">
+            <span className="flex size-8 items-center justify-center rounded-md border border-[var(--sc-accent)] text-[var(--sc-accent)]">S</span>
+            SiteCrawler
+          </div>
+          <p className="mb-6 leading-6">{t('home_footer_desc')}</p>
         </div>
         <div>
-          <h4 className="font-semibold text-on-background mb-4">Product</h4>
+          <h3 className="mb-4 font-semibold text-[var(--sc-strong)]">{t('home_footer_product')}</h3>
           <ul className="space-y-3">
-            <li><a className="hover:text-primary hover:underline underline-offset-4 transition-all" href="#">Features</a></li>
-            <li><a className="hover:text-primary hover:underline underline-offset-4 transition-all" href="#">Pricing</a></li>
-            <li><a className="hover:text-primary hover:underline underline-offset-4 transition-all" href="#">Sitemap</a></li>
+            <li><a className="transition-colors hover:text-[var(--sc-accent)]" href="#benefits">{t('home_footer_features')}</a></li>
+            <li><a className="transition-colors hover:text-[var(--sc-accent)]" href="#pricing">{t('home_footer_pricing')}</a></li>
           </ul>
         </div>
         <div>
-          <h4 className="font-semibold text-on-background mb-4">Connect</h4>
+          <h3 className="mb-4 font-semibold text-[var(--sc-strong)]">{t('home_footer_connect')}</h3>
           <ul className="space-y-3">
-            <li><a className="hover:text-primary hover:underline underline-offset-4 transition-all" href="#">Twitter</a></li>
-            <li><a className="hover:text-primary hover:underline underline-offset-4 transition-all" href="#">GitHub</a></li>
+            <li><a className="transition-colors hover:text-[var(--sc-accent)]" href="" target="_blank" rel="noopener noreferrer">{t('home_footer_github')}</a></li>
           </ul>
         </div>
         <div>
-          <h4 className="font-semibold text-on-background mb-4">Legal</h4>
+          <h3 className="mb-4 font-semibold text-[var(--sc-strong)]">{t('home_footer_legal')}</h3>
           <ul className="space-y-3">
-            <li><a className="hover:text-primary hover:underline underline-offset-4 transition-all" href="#">Privacy</a></li>
-            <li><a className="hover:text-primary hover:underline underline-offset-4 transition-all" href="#">Terms</a></li>
+            <li><Link className="transition-colors hover:text-[var(--sc-accent)]" to="/privacy">{t('home_footer_privacy')}</Link></li>
+            <li><Link className="transition-colors hover:text-[var(--sc-accent)]" to="/terms">{t('home_footer_terms')}</Link></li>
           </ul>
         </div>
       </div>
-      <div className="max-w-[1200px] mx-auto px-6 py-8 border-t border-slate-200 text-center md:text-left text-slate-500 text-xs">
-        © 2024 SiteCrawler. All rights reserved. Powered by Cloudflare.
+      <div className="mx-auto max-w-[1200px] border-t border-[var(--sc-border)] px-6 py-8 text-center text-xs text-[var(--sc-subtle)] md:text-left">
+        {t('home_footer_copyright')}
       </div>
     </footer>
   )

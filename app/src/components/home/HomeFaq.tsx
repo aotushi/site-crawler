@@ -1,38 +1,40 @@
 import { MaterialIcon } from './MaterialIcon'
+import { useLang } from '../../lib/i18n'
 
 export function HomeFaq() {
+  const { lang, t } = useLang()
+  const extra = {
+    zh: [
+      ['什么时候需要 JS 完整爬取?', '当首屏内容由浏览器执行 JavaScript 后才出现,或静态链路提示内容可能不完整时,应使用 Playwright 完整爬取。'],
+      ['ZIP 可以直接部署吗?', '大多数静态站点可以直接检查和部署,但如果原站依赖服务端接口、登录态或反爬策略,仍需要人工复核。'],
+    ],
+    en: [
+      ['When should I use the full JS crawl?', 'Use Playwright full crawl when key content appears only after browser-side JavaScript runs, or when the static lane warns that output may be incomplete.'],
+      ['Can the ZIP be deployed directly?', 'Most static sites can be reviewed and deployed directly, but sites depending on server APIs, auth state, or anti-bot behavior still need manual review.'],
+    ],
+  }[lang]
+  const faqs = [
+    [t('home_faq_q1'), t('home_faq_a1')],
+    [t('home_faq_q2'), t('home_faq_a2')],
+    [t('home_faq_q3'), t('home_faq_a3')],
+    ...extra,
+  ]
+
   return (
-    <section className="py-24 px-6 bg-surface-container-low">
-      <div className="max-w-[800px] mx-auto">
-        <h2 className="text-3xl font-bold text-on-background mb-12 text-center">Frequently Asked Questions</h2>
-        <div className="space-y-4">
-          <details className="group bg-white rounded-xl border border-outline-variant overflow-hidden" open>
-            <summary className="p-6 flex items-center justify-between cursor-pointer font-semibold text-on-background list-none">
-              Is it really free?
-              <MaterialIcon name="expand_more" className="group-open:rotate-180 transition-transform" />
-            </summary>
-            <div className="px-6 pb-6 text-secondary">
-              Yes, SiteCrawler offers a free tier that allows up to 3 crawls per day with a 50-page limit. No credit card is required to start using the free plan.
-            </div>
-          </details>
-          <details className="group bg-white rounded-xl border border-outline-variant overflow-hidden">
-            <summary className="p-6 flex items-center justify-between cursor-pointer font-semibold text-on-background list-none">
-              How fast is the crawling process?
-              <MaterialIcon name="expand_more" className="group-open:rotate-180 transition-transform" />
-            </summary>
-            <div className="px-6 pb-6 text-secondary">
-              Most sites are packaged in under 30 seconds. We use Cloudflare workers to run crawling tasks in parallel, meaning multiple assets are fetched simultaneously for maximum speed.
-            </div>
-          </details>
-          <details className="group bg-white rounded-xl border border-outline-variant overflow-hidden">
-            <summary className="p-6 flex items-center justify-between cursor-pointer font-semibold text-on-background list-none">
-              What files are actually downloaded?
-              <MaterialIcon name="expand_more" className="group-open:rotate-180 transition-transform" />
-            </summary>
-            <div className="px-6 pb-6 text-secondary">
-              We extract HTML files, CSS stylesheets, JavaScript files, images (JPG, PNG, WEBP, SVG), and fonts. We also rewrite the links so the site works perfectly offline.
-            </div>
-          </details>
+    <section className="border-t border-dashed border-[var(--sc-border)] bg-[var(--sc-bg)] px-6 py-20 text-[var(--sc-text)]">
+      <div className="mx-auto max-w-[900px]">
+        <p className="mb-4 text-center text-xs font-semibold uppercase tracking-[2.52px] text-[var(--sc-accent)]">FAQ</p>
+        <h2 className="mb-12 text-center text-3xl font-normal leading-tight tracking-normal text-[var(--sc-strong)] md:text-4xl">{t('home_faq_title')}</h2>
+        <div className="space-y-3">
+          {faqs.map(([question, answer], index) => (
+            <details key={question} className="group overflow-hidden rounded-lg border border-[var(--sc-border)] bg-[var(--sc-card)]" open={index === 0}>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 font-semibold text-[var(--sc-strong)]">
+                {question}
+                <MaterialIcon name="expand_more" className="shrink-0 text-[var(--sc-accent)] transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-5 pb-5 text-sm leading-6 text-[var(--sc-muted)]">{answer}</div>
+            </details>
+          ))}
         </div>
       </div>
     </section>

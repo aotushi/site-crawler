@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://crawler.9shi.cc/sitemap.xml

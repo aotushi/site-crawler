@@ -22,9 +22,9 @@ describe('HomeHero', () => {
     render(<HomeHero />)
 
     await user.type(screen.getByPlaceholderText('https://example.com'), 'abc')
-    await user.click(screen.getByRole('button', { name: /start crawling/i }))
+    await user.click(screen.getByRole('button', { name: /开始爬取|start crawling/i }))
 
-    expect(screen.getByText('Please enter a valid URL starting with http:// or https://')).toBeInTheDocument()
+    expect(screen.getByText(/请输入有效的网站 URL|Please enter a valid URL/)).toBeInTheDocument()
     expect(navigateMock).not.toHaveBeenCalled()
   })
 
@@ -33,7 +33,7 @@ describe('HomeHero', () => {
     render(<HomeHero />)
 
     await user.type(screen.getByPlaceholderText('https://example.com'), 'https://example.com')
-    await user.click(screen.getByRole('button', { name: /start crawling/i }))
+    await user.click(screen.getByRole('button', { name: /开始爬取|start crawling/i }))
 
     expect(navigateMock).toHaveBeenCalledWith({ to: '/crawl', search: { url: 'https://example.com' } })
   })

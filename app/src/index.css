@@ -1,6 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+@import '@material-symbols/font-400/outlined.css';
 @import 'tailwindcss';
+
+/* 覆盖 npm 包默认的 font-display: block，改为 swap 避免 FOIT */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-display: swap;
+}
 
 @theme {
   --color-primary: #004ac6;
@@ -62,4 +67,40 @@
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
   opacity: 0.05;
+}
+
+.site-theme-light {
+  --sc-bg: #f7f8f4;
+  --sc-bg-grid: rgba(16, 16, 16, 0.055);
+  --sc-card: #ffffff;
+  --sc-soft: #eef1e9;
+  --sc-strong: #101010;
+  --sc-text: #2c302b;
+  --sc-muted: #626b60;
+  --sc-subtle: #7a8377;
+  --sc-border: #d8ddd1;
+  --sc-border-strong: #bfc8ba;
+  --sc-accent: #00a96b;
+  --sc-accent-soft: #e2f7ed;
+  --sc-on-accent: #ffffff;
+  --sc-console: #101010;
+  --sc-console-soft: #1a1a1a;
+}
+
+.site-theme-dark {
+  --sc-bg: #101010;
+  --sc-bg-grid: rgba(255, 255, 255, 0.035);
+  --sc-card: #101010;
+  --sc-soft: #1a1a1a;
+  --sc-strong: #ffffff;
+  --sc-text: #f2f2f2;
+  --sc-muted: #bdbdbd;
+  --sc-subtle: #8b949e;
+  --sc-border: #3d3a39;
+  --sc-border-strong: #00d992;
+  --sc-accent: #00d992;
+  --sc-accent-soft: #143c2e;
+  --sc-on-accent: #101010;
+  --sc-console: #101010;
+  --sc-console-soft: #1a1a1a;
 }

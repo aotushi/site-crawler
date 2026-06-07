@@ -1,56 +1,60 @@
 import { MaterialIcon } from './MaterialIcon'
+import { useLang } from '../../lib/i18n'
 
 export function HomePricing() {
+  const { lang, t } = useLang()
+  const copy = {
+    zh: {
+      eyebrow: 'LIMITS',
+      title: '免费可用,限制讲清楚',
+      subtitle: '首页直接交代当前 V1 的使用边界,减少用户开始任务后的预期落差。',
+      quota: '未登录: 静态 3 次/天, JS 完整爬取 1 次/天',
+      featured: 'V1 当前能力',
+      extra: ['SSE 实时进度', '自动 ZIP 下载', '登录后历史记录', 'Cloudflare R2 结果存储'],
+    },
+    en: {
+      eyebrow: 'LIMITS',
+      title: 'Free to use, with clear boundaries',
+      subtitle: 'The page now states V1 limits up front, reducing surprise after users start a job.',
+      quota: 'Anonymous: 3 static crawls/day, 1 full JS crawl/day',
+      featured: 'Current V1 capability',
+      extra: ['SSE progress stream', 'Automatic ZIP download', 'History after login', 'Cloudflare R2 result storage'],
+    },
+  }[lang]
+
   return (
-    <section className="py-24 px-6">
-      <div className="max-w-[1200px] mx-auto text-center mb-16">
-        <h2 className="text-3xl font-bold text-on-background mb-4">Transparent Pricing</h2>
-        <p className="text-secondary">Scale your archiving needs as you grow.</p>
+    <section id="pricing" className="border-t border-dashed border-[var(--sc-border)] bg-[var(--sc-bg)] px-6 py-20 text-[var(--sc-text)]">
+      <div className="mx-auto mb-12 max-w-[1200px]">
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[2.52px] text-[var(--sc-accent)]">{copy.eyebrow}</p>
+        <h2 className="text-3xl font-normal leading-tight tracking-normal text-[var(--sc-strong)] md:text-4xl">{copy.title}</h2>
+        <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--sc-muted)]">{copy.subtitle}</p>
       </div>
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
-        <div className="bg-white border border-outline-variant p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-8 hover:border-primary transition-colors">
-          <div className="text-left">
-            <h3 className="text-xl font-semibold mb-2">Free</h3>
-            <p className="text-secondary max-w-xs">For occasional snapshots and personal experiments.</p>
+      <div className="mx-auto max-w-[1200px]">
+        <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-lg border border-[var(--sc-accent)] bg-[var(--sc-card)] p-6">
+            <span className="mb-6 inline-flex rounded-full border border-[var(--sc-accent)] px-3 py-1 text-xs font-semibold text-[var(--sc-accent)]">
+              {copy.featured}
+            </span>
+            <h3 className="mb-3 text-2xl font-semibold text-[var(--sc-strong)]">{t('home_pricing_plan_name')}</h3>
+            <p className="mb-8 text-sm leading-6 text-[var(--sc-muted)]">{t('home_pricing_plan_desc')}</p>
+            <div className="mb-8 font-mono text-6xl text-[var(--sc-strong)]">$0</div>
+            <a href="#hero" className="inline-flex min-h-12 items-center justify-center rounded-md bg-[var(--sc-accent)] px-6 py-3 font-semibold text-[var(--sc-on-accent)] transition-opacity hover:opacity-90">
+              {t('home_pricing_cta')}
+            </a>
           </div>
-          <ul className="space-y-2 text-left md:w-1/3">
-            <li className="flex items-center gap-2"><MaterialIcon name="check" className="text-green-500 text-[18px]" /> 3 Crawls / Day</li>
-            <li className="flex items-center gap-2"><MaterialIcon name="check" className="text-green-500 text-[18px]" /> Max 50 Pages/Site</li>
-          </ul>
-          <div className="text-center md:text-right">
-            <div className="text-5xl font-extrabold mb-4">$0</div>
-            <button className="bg-surface-container text-primary px-8 py-3 rounded-lg font-semibold w-full md:w-auto">Current Plan</button>
-          </div>
-        </div>
-        <div className="bg-primary text-on-primary p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
-          <div className="absolute top-4 right-4 bg-white/20 px-3 py-1 rounded-full text-xs font-semibold">MOST POPULAR</div>
-          <div className="text-left">
-            <h3 className="text-xl font-semibold mb-2">Pro</h3>
-            <p className="opacity-90 max-w-xs">Perfect for professional developers and archivists.</p>
-          </div>
-          <ul className="space-y-2 text-left md:w-1/3">
-            <li className="flex items-center gap-2"><MaterialIcon name="check" className="text-on-primary-container text-[18px]" /> Unlimited Crawls</li>
-            <li className="flex items-center gap-2"><MaterialIcon name="check" className="text-on-primary-container text-[18px]" /> 5000 Pages/Site</li>
-            <li className="flex items-center gap-2"><MaterialIcon name="check" className="text-on-primary-container text-[18px]" /> Priority Edge Workers</li>
-          </ul>
-          <div className="text-center md:text-right">
-            <div className="text-5xl font-extrabold mb-4">$9<span className="text-lg opacity-70">/mo</span></div>
-            <button className="bg-white text-primary px-8 py-3 rounded-lg font-semibold w-full md:w-auto hover:bg-surface-bright">Upgrade Now</button>
-          </div>
-        </div>
-        <div className="bg-white border border-outline-variant p-8 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-8 hover:border-primary transition-colors">
-          <div className="text-left">
-            <h3 className="text-xl font-semibold mb-2">Business</h3>
-            <p className="text-secondary max-w-xs">High-capacity solutions for legal and compliance archiving.</p>
-          </div>
-          <ul className="space-y-2 text-left md:w-1/3">
-            <li className="flex items-center gap-2"><MaterialIcon name="check" className="text-green-500 text-[18px]" /> Bulk Domain Crawling</li>
-            <li className="flex items-center gap-2"><MaterialIcon name="check" className="text-green-500 text-[18px]" /> Custom API Access</li>
-            <li className="flex items-center gap-2"><MaterialIcon name="check" className="text-green-500 text-[18px]" /> Dedicated Support</li>
-          </ul>
-          <div className="text-center md:text-right">
-            <div className="text-5xl font-extrabold mb-4">$49<span className="text-lg opacity-70">/mo</span></div>
-            <button className="bg-surface-container text-primary px-8 py-3 rounded-lg font-semibold w-full md:w-auto">Contact Sales</button>
+
+          <div className="rounded-lg border border-[var(--sc-border)] bg-[var(--sc-card)]">
+            <div className="border-b border-[var(--sc-border)] px-6 py-5">
+              <p className="font-mono text-sm text-[var(--sc-accent)]">{copy.quota}</p>
+            </div>
+            <ul className="grid gap-px bg-[var(--sc-border)] sm:grid-cols-2">
+              {[t('home_pricing_feat1'), t('home_pricing_feat2'), t('home_pricing_feat3'), ...copy.extra].map((item) => (
+                <li key={item} className="flex items-center gap-3 bg-[var(--sc-card)] px-6 py-5 text-sm text-[var(--sc-muted)]">
+                  <MaterialIcon name="check" className="text-[18px] text-[var(--sc-accent)]" />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>

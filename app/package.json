@@ -12,6 +12,7 @@
     "test:run": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@material-symbols/font-400": "^0.44.8",
     "@tailwindcss/vite": "^4.2.4",
     "@tanstack/react-router": "^1.168.24",
     "@tanstack/router-vite-plugin": "^1.166.40",
