@@ -17,9 +17,11 @@ export interface CrawlProgress {
 
 export type ProgressCallback = (p: CrawlProgress) => void
 
-const MAX_FILES = 300
-const MAX_BYTES = 50 * 1024 * 1024  // 50 MB
-const MAX_DEPTH = 2
+// 上限贴近 Cloudflare Workers 物理天花板：子请求 1000/请求、内存 128MB、CPU 时间
+// 文件数留余量给页面抓取；字节与内存权衡；深度提一级以发现更多页面内资源
+const MAX_FILES = 900
+const MAX_BYTES = 100 * 1024 * 1024  // 100 MB
+const MAX_DEPTH = 3
 const POOL_CONCURRENCY = 6  // 并发工作池大小，控制子请求突发与内存峰值
 
 const STATIC_EXTENSIONS = new Set([
@@ -227,7 +229,32 @@ function rewriteHtml(data: Uint8Array, pageUrl: string, urlToPath: Map<string, s
     }
   )
 
+  // 内联 style 属性与 <style> 块中的 url(...)（含 &quot; 实体），重写为本地相对路径
+  html = html.replace(
+    /url\(\s*(&quot;|&#0*34;|["'])?([^)]*?)\1?\s*\)/gi,
+    (match, quote, rawUrl) => {
+      const cleaned = decodeEntities((rawUrl ?? '').trim())
+      if (!cleaned) return match
+      const resolved = tryResolve(cleaned, base)
+      if (!resolved) return match
+      const targetPath = urlToPath.get(resolved)
+      if (!targetPath) return match
+      const q = quote ?? ''
+      return `url(${q}${relPath(pageZipPath, targetPath)}${q})`
+    }
+  )
+
   return new TextEncoder().encode(html)
+}
+
+// 解码 HTML 实体（内联 style 中的 &quot; 等），供 url() 重写使用
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*34;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#0*39;/g, "'")
+    .replace(/&amp;/g, '&')
 }
 
 // 重写 CSS 中 url() 的同源 URL 为相对路径
