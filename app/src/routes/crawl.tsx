@@ -339,7 +339,7 @@ function CrawlPage() {
                   disabled={status === 'running' || !inputUrl}
                   className="flex min-h-12 items-center justify-center gap-2 rounded-md bg-[var(--sc-accent)] px-6 py-3 font-semibold text-[var(--sc-on-accent)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  <MaterialIcon name={status === 'running' ? 'progress_activity' : 'travel_explore'} className="text-[20px]" />
+                  <MaterialIcon name={status === 'running' ? 'progress_activity' : 'travel_explore'} className={`text-[20px] ${status === 'running' ? 'animate-spin' : ''}`} />
                   {status === 'running' ? t('crawl_running') : t('crawl_start')}
                 </button>
               </div>
