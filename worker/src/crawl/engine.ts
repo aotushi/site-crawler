@@ -93,7 +93,12 @@ export async function crawlSite(startUrl: string, onProgress?: ProgressCallback)
   async function fetchUrl(url: string): Promise<{ data: Uint8Array; contentType: string } | null> {
     try {
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 SiteCrawlerBot/1.0' },
+        // 使用真实浏览器请求头，避免 SiteCrawlerBot 之类自曝身份被 WAF 直接拦截
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
         redirect: 'follow',
       })
       if (!res.ok) return null
