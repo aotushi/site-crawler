@@ -6,7 +6,9 @@ compatibility_date = "2024-01-01"
 account_id = "eff602d8715ddb9bcf1b4ba8b2ca0788"
 
 [[routes]]
-pattern = "api.9shi.cc/crawler/*"
+# nginx 在 api.9shi.cc/crawler/* 反代回源到橙云占位域名 origin-api.9shi.cc，
+# 故 worker route 绑在 origin-api 上（保留 /crawler 前缀，匹配 worker 内部路由）
+pattern = "origin-api.9shi.cc/crawler/*"
 zone_name = "9shi.cc"
 
 [[d1_databases]]
