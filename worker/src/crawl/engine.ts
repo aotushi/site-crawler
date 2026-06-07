@@ -21,7 +21,7 @@ export type ProgressCallback = (p: CrawlProgress) => void
 // 文件数留余量给页面抓取；字节与内存权衡；深度提一级以发现更多页面内资源
 const MAX_FILES = 900
 const MAX_BYTES = 100 * 1024 * 1024  // 100 MB
-const MAX_DEPTH = 3
+const MAX_DEPTH = 5
 const POOL_CONCURRENCY = 6  // 并发工作池大小，控制子请求突发与内存峰值
 
 const STATIC_EXTENSIONS = new Set([
@@ -74,7 +74,8 @@ export async function crawlSite(startUrl: string, onProgress?: ProgressCallback)
 
   type Task = { url: string; kind: 'page'; depth: number } | { url: string; kind: 'asset' }
   const enqueued = new Set<string>()
-  const queue: Task[] = []
+  const pageQueue: Task[] = []   // 页面优先：先抓完所有页面，资源用剩余额度
+  const assetQueue: Task[] = []
 
   function reportProgress() {
     onProgress?.({ downloaded: fileMap.size, queued: enqueued.size, bytes: totalBytes })
@@ -87,7 +88,12 @@ export async function crawlSite(startUrl: string, onProgress?: ProgressCallback)
   function enqueue(task: Task) {
     if (enqueued.has(task.url) || visited.has(task.url)) return
     enqueued.add(task.url)
-    queue.push(task)
+    if (task.kind === 'page') pageQueue.push(task)
+    else assetQueue.push(task)
+  }
+
+  function queueSize(): number {
+    return pageQueue.length + assetQueue.length
   }
 
   async function fetchUrl(url: string): Promise<{ data: Uint8Array; contentType: string } | null> {
@@ -109,6 +115,58 @@ export async function crawlSite(startUrl: string, onProgress?: ProgressCallback)
     } catch {
       return null
     }
+  }
+
+  // 拉取站点 sitemap，返回同源页面 URL 列表（支持 sitemapindex 两层）。
+  // 不计入 fileMap/额度，仅用于补全页面发现，根治"靠内链爬行漏页"。
+  async function collectSitemapUrls(origin: string): Promise<string[]> {
+    const decode = (d: Uint8Array) => new TextDecoder().decode(d)
+    const sameOrigin = (raw: string): string | null => {
+      try {
+        const parsed = new URL(raw.replace(/&amp;/g, '&'))
+        if (parsed.origin !== origin) return null
+        parsed.hash = ''
+        return parsed.href
+      } catch {
+        return null
+      }
+    }
+    const extractLocs = (xml: string): string[] => {
+      const out: string[] = []
+      for (const m of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)) out.push(m[1])
+      return out
+    }
+
+    let rootXml: string | null = null
+    for (const p of ['/sitemap_index.xml', '/sitemap.xml', '/wp-sitemap.xml']) {
+      const r = await fetchUrl(new URL(p, origin).href)
+      if (r) {
+        const xml = decode(r.data)
+        if (xml.includes('<loc')) { rootXml = xml; break }
+      }
+    }
+    if (!rootXml) return []
+
+    const pages = new Set<string>()
+    if (/<sitemapindex[\s>]/i.test(rootXml)) {
+      // sitemap 索引：逐个抓子 sitemap
+      for (const sm of extractLocs(rootXml)) {
+        const smUrl = sameOrigin(sm)
+        if (!smUrl) continue
+        const r = await fetchUrl(smUrl)
+        if (!r) continue
+        for (const loc of extractLocs(decode(r.data))) {
+          const u = sameOrigin(loc)
+          if (u) pages.add(u)
+        }
+      }
+    } else {
+      for (const loc of extractLocs(rootXml)) {
+        const u = sameOrigin(loc)
+        if (u) pages.add(u)
+      }
+    }
+    return [...pages]
   }
 
   async function processTask(task: Task): Promise<void> {
@@ -138,8 +196,8 @@ export async function crawlSite(startUrl: string, onProgress?: ProgressCallback)
       return
     }
 
-    // page
-    if (!result.contentType.includes('text/html')) return
+    // page（兼容 application/xhtml+xml）
+    if (!result.contentType.includes('text/html') && !result.contentType.includes('application/xhtml')) return
     const html = new TextDecoder().decode(result.data)
     if (task.depth === 0 && isJsRendered(html)) jsWarning = true
     if (task.depth >= MAX_DEPTH) return
@@ -154,22 +212,27 @@ export async function crawlSite(startUrl: string, onProgress?: ProgressCallback)
     let active = 0
     return new Promise<void>((resolve) => {
       const pump = () => {
-        if (limitReached()) queue.length = 0
-        while (active < concurrency && queue.length > 0 && !limitReached()) {
-          const task = queue.shift()!
+        if (limitReached()) { pageQueue.length = 0; assetQueue.length = 0 }
+        while (active < concurrency && queueSize() > 0 && !limitReached()) {
+          // 页面优先：pageQueue 排空后才处理资源，避免资源把页面挤出额度
+          const task = (pageQueue.length > 0 ? pageQueue.shift() : assetQueue.shift())!
           active++
           processTask(task).catch(() => {}).finally(() => {
             active--
             pump()
           })
         }
-        if (active === 0 && (queue.length === 0 || limitReached())) resolve()
+        if (active === 0 && (queueSize() === 0 || limitReached())) resolve()
       }
       pump()
     })
   }
 
   enqueue({ url: startUrl, kind: 'page', depth: 0 })
+  // 接入 sitemap：把站点声明的全部页面 URL 直接入队，根治"靠内链爬行发现不全"
+  for (const pageUrl of await collectSitemapUrls(startOrigin)) {
+    enqueue({ url: pageUrl, kind: 'page', depth: 0 })
+  }
   reportProgress()
   await runPool(POOL_CONCURRENCY)
 
