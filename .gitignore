@@ -1,1 +1,27 @@
 .worktrees/
+
+# Scratch / 生成物
+context/
+
+# 环境变量（含密钥，勿入库）
+.env
+.env.*
+!.env.example
+
+# Cloudflare
+.wrangler/
+
+# 备份文件
+*.bak
+
+# 本地覆盖
+*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
