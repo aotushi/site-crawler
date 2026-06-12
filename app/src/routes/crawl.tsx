@@ -99,16 +99,29 @@ function CrawlPage() {
     renderTaskIdRef.current = taskId
     saveCrawlState({ url: targetUrl, status: 'running', mode: 'render', renderTaskId: taskId })
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+    let nullStrikes = 0 // 连续多次拿不到状态(任务过期/已清理)则按失败收尾，避免永久转圈
     pollIntervalRef.current = setInterval(async () => {
       const s = await getRenderStatus(taskId)
-      if (!s) return // 网络抖动：继续轮询
+      if (!s) {
+        nullStrikes++
+        if (nullStrikes >= 10) { // 10 次 × 3s = 30s 宽限
+          clearInterval(pollIntervalRef.current ?? undefined)
+          pollIntervalRef.current = null
+          setStatus('failed')
+          clearCrawlState() // 清除已过期任务，避免下次访问重新挂起
+        }
+        return
+      }
+      nullStrikes = 0
       setRenderStatus(s)
       if (s.status === 'done' || s.status === 'partial') {
-        clearInterval(pollIntervalRef.current!)
+        clearInterval(pollIntervalRef.current ?? undefined)
+        pollIntervalRef.current = null
         setStatus('done')
         saveCrawlState({ url: targetUrl, status: 'done', mode: 'render', renderTaskId: taskId })
       } else if (s.status === 'failed') {
-        clearInterval(pollIntervalRef.current!)
+        clearInterval(pollIntervalRef.current ?? undefined)
+        pollIntervalRef.current = null
         setStatus('failed')
         saveCrawlState({ url: targetUrl, status: 'failed', mode: 'render', renderTaskId: taskId })
       }
