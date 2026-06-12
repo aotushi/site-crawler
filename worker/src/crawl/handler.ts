@@ -1,8 +1,14 @@
 import type { Env } from '../index'
 import { verifyToken, extractBearer } from '../auth/jwt'
 import { crawlSite } from './engine'
-import { sha16 } from './shared'
-import { createCrawlRecord, updateCrawlRecord, checkAndIncrementIpUsage, getCrawlCache, setCrawlCache } from '../db/queries'
+import { isJsRendered } from './detector'
+import { fetchUrl, sha16 } from './shared'
+import { renderConfig } from '../render/config'
+import { checkBudget } from '../render/quota'
+import {
+  createCrawlRecord, updateCrawlRecord, checkAndIncrementIpUsage,
+  getCrawlCache, setCrawlCache, createRenderTask,
+} from '../db/queries'
 
 function sseEvent(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
@@ -11,6 +17,7 @@ function sseEvent(event: string, data: unknown): string {
 export async function handleCrawl(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
   const token = extractBearer(request)
   const user = token ? await verifyToken(token, env.JWT_SECRET) : null
+  const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown'
 
   let body: { url?: string }
   try {
@@ -30,9 +37,8 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
     })
   }
 
-  // 未登录用户：每 IP 每天限 3 次静态爬取
+  // 未登录用户：每 IP 每天限 3 次静态爬取（渲染链路另有 render 配额，在分流处检查）
   if (!user) {
-    const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown'
     const allowed = await checkAndIncrementIpUsage(env.DB, ip, 'static', 3)
     if (!allowed) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again tomorrow.' }), {
@@ -40,20 +46,6 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-  }
-
-  const recordId = user ? crypto.randomUUID() : null
-  if (user && recordId) {
-    await createCrawlRecord(env.DB, {
-      id: recordId,
-      user_id: user.sub,
-      url,
-      status: 'running',
-      file_count: null,
-      zip_size: null,
-      created_at: Date.now(),
-      completed_at: null,
-    })
   }
 
   const sseHeaders = {
@@ -69,11 +61,12 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
 
   // 在后台执行爬取，通过流推送进度
   ;(async () => {
+    // 提升到 try 外：catch 里要用它标记失败（仅静态链路会赋值）
+    let recordId: string | null = null
     try {
-      // 静态链路缓存键：用 static: 前缀与渲染链路区分
       const urlHash = await sha16('static:' + url)
 
-      // 缓存命中：直接返回 R2 下载链接
+      // 静态缓存命中：直接返回 R2 下载链接
       const cached = await getCrawlCache(env.DB, urlHash)
       if (cached) {
         await writer.write(enc.encode(sseEvent('done', {
@@ -85,11 +78,74 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
         return
       }
 
+      // ---- V2 分流：入口 HTML 探测 SPA ----
+      const entry = await fetchUrl(url)
+      const entryCt = entry?.contentType ?? ''
+      const entryHtml = entry && (entryCt.includes('text/html') || entryCt.includes('application/xhtml'))
+        ? new TextDecoder().decode(entry.data)
+        : null
+
+      if (entryHtml && isJsRendered(entryHtml)) {
+        const cfg = renderConfig(env)
+
+        // 渲染缓存命中：直接 done
+        const renderCached = await getCrawlCache(env.DB, await sha16('render:' + url))
+        if (renderCached) {
+          await writer.write(enc.encode(sseEvent('done', {
+            fileCount: renderCached.file_count,
+            totalBytes: renderCached.zip_size,
+            jsWarning: false,
+            downloadUrl: `${env.R2_PUBLIC_BASE}/${renderCached.r2_key}`,
+          })))
+          return
+        }
+
+        // 熔断检查在配额消耗之前：预算已死时不浪费匿名每日渲染额度
+        const budget = await checkBudget(env.DB, cfg.monthlyBudgetSeconds)
+        const renderAllowed = budget.allowed
+          && (user ? true : await checkAndIncrementIpUsage(env.DB, ip, 'render', cfg.dailyLimitAnon))
+
+        if (renderAllowed) {
+          const taskId = crypto.randomUUID()
+          await createRenderTask(env.DB, {
+            id: taskId,
+            url,
+            ip: user ? null : ip,
+            user_id: user?.sub ?? null,
+            created_at: Date.now(),
+          })
+          await env.RENDER_WORKFLOW.create({ id: taskId, params: { taskId, url, userId: user?.sub ?? null } })
+          await writer.write(enc.encode(sseEvent('render_task', { taskId })))
+          return
+        }
+
+        // 渲染不可用 → 推送原因，降级走静态链路
+        await writer.write(enc.encode(sseEvent('notice', {
+          reason: budget.allowed ? 'render_quota' : 'render_budget',
+        })))
+      }
+
+      // ---- 静态链路（V1 原逻辑）。历史记录在确定走静态后才建，
+      // 渲染任务的历史由 workflow finalize 自己写（crawl_type 'render'）----
+      if (user) {
+        recordId = crypto.randomUUID()
+        await createCrawlRecord(env.DB, {
+          id: recordId,
+          user_id: user.sub,
+          url,
+          status: 'running',
+          file_count: null,
+          zip_size: null,
+          created_at: Date.now(),
+          completed_at: null,
+        })
+      }
+
       const result = await crawlSite(url, (progress) => {
         writer.write(enc.encode(sseEvent('progress', progress)))
       })
 
-      // 上传 ZIP 到 R2（#5：不再走 base64+SSE，规避内存峰值）
+      // 上传 ZIP 到 R2（不走 base64+SSE，规避内存峰值）
       const r2Key = `crawls/static-${urlHash}.zip`
       await env.CRAWL_BUCKET.put(r2Key, result.zip, {
         httpMetadata: { contentType: 'application/zip' },
