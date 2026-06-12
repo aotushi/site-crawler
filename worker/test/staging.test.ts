@@ -46,4 +46,15 @@ describe('staging 读写删', () => {
     expect(await listStaging(asBucket(bucket), 't1')).toHaveLength(0)
     expect(await listStaging(asBucket(bucket), 't2')).toHaveLength(1)
   })
+  it('deleteStaging 按 100 一批处理 >100 对象时的分页删除', async () => {
+    const bucket = new FakeBucket()
+    // 暂存 101 个对象，验证 100+ 删除时的分页逻辑
+    for (let i = 0; i < 101; i++) {
+      await stageObject(asBucket(bucket), 'batch-task', `https://e.com/a${i}.png`, new Uint8Array([i % 256]), 'image/png')
+    }
+    expect(await listStaging(asBucket(bucket), 'batch-task')).toHaveLength(101)
+    // 执行删除，应触发多批处理（第一批 100 个，第二批 1 个）
+    await deleteStaging(asBucket(bucket), 'batch-task')
+    expect(await listStaging(asBucket(bucket), 'batch-task')).toHaveLength(0)
+  })
 })

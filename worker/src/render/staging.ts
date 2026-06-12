@@ -28,6 +28,7 @@ export async function stageObject(
 export async function listStaging(bucket: R2Bucket, taskId: string): Promise<StagedObject[]> {
   const out: StagedObject[] = []
   let cursor: string | undefined
+  // 上游 RENDER_MAX_OBJECTS=850 < R2 单页上限 1000，实践中不会触发分页；循环仅作防御
   do {
     // include: ['customMetadata'] 是实际 R2 API 支持的参数，但旧版 workers-types 定义中缺失
     const res = await bucket.list({ prefix: stagingPrefix(taskId), cursor, include: ['customMetadata'] } as R2ListOptions)

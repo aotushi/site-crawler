@@ -46,6 +46,7 @@ export class FakeBucket {
       key,
       uploadId: 'fake-upload',
       async uploadPart(partNumber: number, value: ArrayBuffer | Uint8Array) {
+        // 注意：真实 R2 要求非末分片 ≥5MiB 且等长，FakeBucket 不强制——上传方（zip-stream）需自行保证定长分片
         const data = value instanceof Uint8Array ? new Uint8Array(value) : new Uint8Array(value)
         parts.set(partNumber, data)
         return { partNumber, etag: `etag-${partNumber}` }
