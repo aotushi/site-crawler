@@ -1,7 +1,7 @@
 import puppeteer, { BrowserWorker } from '@cloudflare/puppeteer'
 import type { Env } from '../index'
 import { renderConfig } from './config'
-import { stageObject, isStaticAssetResponse } from './staging'
+import { stageObject, isStaticAssetResponse, ASSET_MAX_BYTES } from './staging'
 import { normalizeLinks } from '../crawl/shared'
 
 // 步骤返回值上限 1MiB：10 页/批 × 200 链接 × ~200 字节 URL ≈ 400KB，留足余量
@@ -55,7 +55,12 @@ export async function renderBatch(env: Env, taskId: string, input: RenderBatchIn
             if (stagedUrls.has(resUrl)) return
             // 在 await 前占位，防止同一 URL 的并发响应重复入库
             stagedUrls.add(resUrl)
+            // 单资源体积预检：Content-Length 超限直接跳过，不缓冲（防大媒体在 128MB isolate 内 OOM）
+            const contentLength = Number(res.headers()['content-length'])
+            if (Number.isFinite(contentLength) && contentLength > ASSET_MAX_BYTES) return
             const body = await res.buffer()
+            // Content-Length 缺失（chunked）时只能先缓冲，超限则丢弃不入暂存
+            if (body.byteLength > ASSET_MAX_BYTES) return
             // check 与累加之间无 await，单线程下原子，不会超额
             if (bytesAdded + body.byteLength > input.byteBudgetLeft || objectsAdded + 1 > input.objectBudgetLeft) {
               budgetExhausted = true

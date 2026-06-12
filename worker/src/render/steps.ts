@@ -1,6 +1,6 @@
 import { sha16, urlToZipPath, rewriteHtml, rewriteCss, fetchUrl, collectSitemapUrls, normalizeLinks } from '../crawl/shared'
 import { parseAssets, parseCssUrls } from '../crawl/parser'
-import { listStaging, stageObject, isStaticAssetResponse } from './staging'
+import { listStaging, stageObject, isStaticAssetResponse, ASSET_MAX_BYTES } from './staging'
 import { zipChunks, uploadChunked, ZipFileSource } from './zip-stream'
 
 // 页面发现 = 入口 URL + sitemap（同源、去 hash、去重），截断到 maxPages
@@ -62,7 +62,8 @@ export async function fetchAssetBatch(
   for (let i = 0; i < urls.length && !budgetExhausted; i += FETCH_CONCURRENCY) {
     const slice = urls.slice(i, i + FETCH_CONCURRENCY)
     await Promise.all(slice.map(async (url) => {
-      const res = await fetchUrl(url)
+      // 单资源体积上限：超限时 fetchUrl 返回 null，走下方跳过分支
+      const res = await fetchUrl(url, { maxBytes: ASSET_MAX_BYTES })
       if (!res) return
       const ct = ((res.contentType || '').split(';')[0] ?? '').trim()
       if (!isStaticAssetResponse(url, ct)) return

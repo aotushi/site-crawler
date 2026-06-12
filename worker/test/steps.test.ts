@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { unzipSync } from 'fflate'
 import { FakeBucket, asBucket } from './helpers'
 import { discoverPages, collectMissingAssets, fetchAssetBatch, zipStaging } from '../src/render/steps'
-import { stageObject } from '../src/render/staging'
+import { stageObject, ASSET_MAX_BYTES } from '../src/render/staging'
 
 afterEach(() => { vi.unstubAllGlobals() })
 
@@ -83,6 +83,19 @@ describe('fetchAssetBatch', () => {
     const r = await fetchAssetBatch(asBucket(new FakeBucket()), 't1', ['https://a.com/big.png'], 50, 10)
     expect(r.objectsAdded).toBe(0)
     expect(r.budgetExhausted).toBe(true)
+  })
+  it('Content-Length 超过单资源上限的资源被跳过，不入暂存（fetchUrl 收到 maxBytes 后返回 null）', async () => {
+    // 显式带超限 Content-Length 的小 body：验证按响应头预检跳过，而非真缓冲 50MB
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new Uint8Array([1]), {
+      status: 200,
+      headers: { 'Content-Type': 'video/mp4', 'Content-Length': String(ASSET_MAX_BYTES + 1) },
+    })))
+    const bucket = new FakeBucket()
+    const r = await fetchAssetBatch(asBucket(bucket), 't1', ['https://a.com/huge.mp4'], Number.MAX_SAFE_INTEGER, 10)
+    expect(r.objectsAdded).toBe(0)
+    expect(r.bytesAdded).toBe(0)
+    expect(r.budgetExhausted).toBe(false) // 单资源超限是跳过，不是预算耗尽
+    expect((await bucket.list({ prefix: 'render/t1/raw/' })).objects).toHaveLength(0)
   })
 })
 

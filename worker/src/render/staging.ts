@@ -53,6 +53,10 @@ export async function deleteStaging(bucket: R2Bucket, taskId: string): Promise<v
   }
 }
 
+// 单资源体积上限：截获与补抓共用。ASSET_CT_PREFIXES 含 video/ 等大媒体类型，
+// 128MB isolate 无法整段缓冲超大文件，超限资源直接跳过
+export const ASSET_MAX_BYTES = 50 * 1024 * 1024
+
 // 响应是否为应截获的静态资源：排除 HTML/JSON（XHR 数据），收 css/js/图片/字体/音视频
 const ASSET_CT_PREFIXES = [
   'text/css', 'application/javascript', 'text/javascript', 'application/x-javascript',
