@@ -4,6 +4,8 @@ import { getCrawlHistory } from './db/queries'
 import { handleCrawl } from './crawl/handler'
 import { handleJsTrigger, handleJsStatus } from './crawl/js-handler'
 
+export { RenderCrawlWorkflow } from './render/workflow'
+
 export interface Env {
   DB: D1Database
   JWT_SECRET: string

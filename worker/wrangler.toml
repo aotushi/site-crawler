@@ -61,7 +61,15 @@ database_id = "d79e138c-b877-456f-9389-e68afb2f7bcb"
 binding = "CRAWL_BUCKET"
 bucket_name = "site-crawler-results"
 
-# [[workflows]] 在 Task 10 添加（class_name 必须先存在，否则 wrangler dev 启动失败）
+[[workflows]]
+name = "render-crawl"
+binding = "RENDER_WORKFLOW"
+class_name = "RenderCrawlWorkflow"
+
+[[env.dev.workflows]]
+name = "render-crawl"
+binding = "RENDER_WORKFLOW"
+class_name = "RenderCrawlWorkflow"
 
 # Secrets (set via wrangler secret put):
 # JWT_SECRET
