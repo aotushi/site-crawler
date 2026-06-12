@@ -1,6 +1,7 @@
 name = "site-crawler-worker"
 main = "src/index.ts"
 compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
 
 # 账户ID
 account_id = "eff602d8715ddb9bcf1b4ba8b2ca0788"
@@ -38,6 +39,7 @@ RENDER_DAILY_LIMIT_ANON = "1"
 # ⚠️ [env.dev] 不继承顶层 bindings/vars，必须逐项镜像
 [env.dev]
 port = 8787
+compatibility_flags = ["nodejs_compat"]
 
 [env.dev.browser]
 binding = "BROWSER"
