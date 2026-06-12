@@ -1,16 +1,11 @@
 import type { Env } from '../index'
 import { verifyToken, extractBearer } from '../auth/jwt'
 import { crawlSite } from './engine'
+import { sha16 } from './shared'
 import { createCrawlRecord, updateCrawlRecord, checkAndIncrementIpUsage, getCrawlCache, setCrawlCache } from '../db/queries'
 
 function sseEvent(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
-}
-
-// 静态链路缓存键：用 static: 前缀与 JS 链路区分
-async function hashStaticUrl(url: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('static:' + url))
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16)
 }
 
 export async function handleCrawl(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
@@ -75,7 +70,8 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
   // 在后台执行爬取，通过流推送进度
   ;(async () => {
     try {
-      const urlHash = await hashStaticUrl(url)
+      // 静态链路缓存键：用 static: 前缀与渲染链路区分
+      const urlHash = await sha16('static:' + url)
 
       // 缓存命中：直接返回 R2 下载链接
       const cached = await getCrawlCache(env.DB, urlHash)
