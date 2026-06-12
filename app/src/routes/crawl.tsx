@@ -2,15 +2,15 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
 import { z } from 'zod'
 import { useLang } from '../lib/i18n'
-import { fetchWorker } from '../lib/api'
-import { saveCrawlState, clearCrawlState } from '../lib/crawl-state'
+import { fetchWorker, getRenderStatus } from '../lib/api'
+import type { RenderStatus } from '../lib/api'
+import { saveCrawlState, loadCrawlState, clearCrawlState } from '../lib/crawl-state'
 import { CrawlProgress } from '../components/CrawlProgress'
 import { MaterialIcon } from '../components/home/MaterialIcon'
 
 const searchSchema = z.object({ url: z.string().optional() })
 
 type Status = 'idle' | 'running' | 'done' | 'failed'
-type FullCrawlStatus = 'idle' | 'triggering' | 'pending' | 'done' | 'failed'
 
 interface ProgressState {
   downloaded: number
@@ -30,48 +30,47 @@ function CrawlPage() {
   const zipRef = useRef<Blob | null>(null)
   const staticDownloadUrlRef = useRef<string | null>(null)
   const zipNameRef = useRef('site.zip')
-  const [fullCrawlStatus, setFullCrawlStatus] = useState<FullCrawlStatus>('idle')
-  const fullZipRef = useRef<Blob | null>(null)
-  const fullDownloadUrlRef = useRef<string | null>(null)
+  const [renderStatus, setRenderStatus] = useState<RenderStatus | null>(null)
+  const [renderNotice, setRenderNotice] = useState<'render_quota' | 'render_budget' | null>(null)
+  const renderTaskIdRef = useRef<string | null>(null)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const [fullCrawlProgress, setFullCrawlProgress] = useState<{ phase: string; downloaded: number; total: number } | null>(null)
   const copy = {
     zh: {
       eyebrow: 'CRAWL CONSOLE',
       title: '启动一次可观测的网站归档任务',
-      subtitle: '输入目标 URL 后,静态链路会实时返回资源队列、下载数量和打包体积。若检测到动态渲染,可继续触发 Playwright 完整爬取。',
+      subtitle: '输入目标 URL 后自动识别站点类型：静态站实时返回资源队列与打包体积；检测到 SPA 则转入云端浏览器异步渲染整站。',
       inputLabel: '目标站点 URL',
       staticLane: '静态边缘链路',
       staticLaneDesc: '适合静态站、SSR 页面、资源可直接发现的网站。',
-      jsLane: 'JS 完整链路',
-      jsLaneDesc: '适合 SPA、懒加载页面和浏览器执行后才出现的内容。',
+      jsLane: '渲染链路',
+      jsLaneDesc: '检测到 SPA 时自动启用：云端浏览器渲染 + 异步全站爬取。',
       deliverable: '交付物',
       deliverableDesc: '输出 ZIP,保留目录结构和可离线检查的资源。',
       queueTitle: '任务边界',
-      queueItems: ['静态最大 200 文件 / 50MB', '未登录用户每日限额保护', '运行中离开页面会中断静态任务'],
+      queueItems: ['静态最大 900 文件 / 100MB', '渲染最大 500 页 / 900MB，匿名每日 1 次', '渲染任务异步执行，可关闭页面后回来查看'],
       targetHint: '建议输入完整 URL,例如 https://example.com',
       statusIdle: '等待输入',
-      statusRunning: '静态爬取运行中',
-      statusDone: '静态归档已完成',
+      statusRunning: '任务运行中',
+      statusDone: '归档已完成',
       statusFailed: '任务失败,请检查 URL 或稍后重试',
     },
     en: {
       eyebrow: 'CRAWL CONSOLE',
       title: 'Start an observable website archive job',
-      subtitle: 'Enter a target URL and the static lane streams queue size, downloaded files, and package size. If dynamic rendering is detected, escalate to a full Playwright crawl.',
+      subtitle: 'Enter a target URL and the site type is detected automatically: static sites stream queue and package size in real time; SPAs escalate to async cloud-browser rendering of the whole site.',
       inputLabel: 'Target site URL',
       staticLane: 'Static edge lane',
       staticLaneDesc: 'Best for static sites, SSR pages, and directly discoverable assets.',
-      jsLane: 'Full JS lane',
-      jsLaneDesc: 'Best for SPAs, lazy-loaded pages, and browser-rendered content.',
+      jsLane: 'Render lane',
+      jsLaneDesc: 'Auto-enabled for SPAs: cloud-browser rendering plus an async full-site crawl.',
       deliverable: 'Deliverable',
       deliverableDesc: 'Outputs a ZIP with folder structure and offline-reviewable assets.',
       queueTitle: 'Job boundaries',
-      queueItems: ['Static limit: 200 files / 50MB', 'Anonymous daily quota protects the service', 'Leaving during a static job interrupts it'],
+      queueItems: ['Static limit: 900 files / 100MB', 'Render limit: 500 pages / 900MB, 1 anonymous run per day', 'Render jobs run async — close the page and come back later'],
       targetHint: 'Use a full URL, for example https://example.com',
       statusIdle: 'Waiting for input',
-      statusRunning: 'Static crawl running',
-      statusDone: 'Static archive complete',
+      statusRunning: 'Job running',
+      statusDone: 'Archive complete',
       statusFailed: 'Job failed. Check the URL or retry later.',
     },
   }[lang]
@@ -86,7 +85,8 @@ function CrawlPage() {
 
   useEffect(() => {
     function onBeforeUnload(e: BeforeUnloadEvent) {
-      if (status === 'running') {
+      // 渲染任务在云端异步执行，离开页面不中断；只拦静态任务
+      if (status === 'running' && !renderTaskIdRef.current) {
         e.preventDefault()
         e.returnValue = t('crawl_leave_confirm')
       }
@@ -94,6 +94,26 @@ function CrawlPage() {
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [status, t])
+
+  function startRenderPolling(taskId: string, targetUrl: string) {
+    renderTaskIdRef.current = taskId
+    saveCrawlState({ url: targetUrl, status: 'running', mode: 'render', renderTaskId: taskId })
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+    pollIntervalRef.current = setInterval(async () => {
+      const s = await getRenderStatus(taskId)
+      if (!s) return // 网络抖动：继续轮询
+      setRenderStatus(s)
+      if (s.status === 'done' || s.status === 'partial') {
+        clearInterval(pollIntervalRef.current!)
+        setStatus('done')
+        saveCrawlState({ url: targetUrl, status: 'done', mode: 'render', renderTaskId: taskId })
+      } else if (s.status === 'failed') {
+        clearInterval(pollIntervalRef.current!)
+        setStatus('failed')
+        saveCrawlState({ url: targetUrl, status: 'failed', mode: 'render', renderTaskId: taskId })
+      }
+    }, 3000)
+  }
 
   async function startCrawl(targetUrl: string) {
     setStatus('running')
@@ -140,6 +160,12 @@ function CrawlPage() {
               queued: data.queued as number,
               bytes: data.bytes as number,
             })
+          } else if (event === 'render_task') {
+            // SPA 分流：worker 已建渲染任务，转入轮询（SSE 流随后由服务端关闭）
+            startRenderPolling(data.taskId as string, targetUrl)
+          } else if (event === 'notice') {
+            // 渲染不可用，降级静态；显示原因横幅
+            setRenderNotice(data.reason as 'render_quota' | 'render_budget')
           } else if (event === 'done') {
             const count = data.fileCount as number
             const bytes = data.totalBytes as number
@@ -179,8 +205,11 @@ function CrawlPage() {
         }
       }
     } catch {
-      setStatus('failed')
-      saveCrawlState({ url: targetUrl, status: 'failed' })
+      // 渲染轮询已接管时，SSE 通道的中断不算失败
+      if (!renderTaskIdRef.current) {
+        setStatus('failed')
+        saveCrawlState({ url: targetUrl, status: 'failed' })
+      }
     }
   }
 
@@ -200,82 +229,12 @@ function CrawlPage() {
     URL.revokeObjectURL(a.href)
   }
 
-  async function startFullCrawl() {
-    setFullCrawlStatus('triggering')
-    try {
-      const res = await fetchWorker('/api/crawl/js/trigger', {
-        method: 'POST',
-        body: JSON.stringify({ url: inputUrl }),
-      })
-      if (!res.ok) { setFullCrawlStatus('failed'); return }
-      const data = await res.json() as {
-        runId?: number
-        cached?: boolean
-        downloadUrl?: string
-        fileCount?: number
-        zipSize?: number
-      }
-
-      // 缓存命中，直接可下载
-      if (data.cached && data.downloadUrl) {
-        fullDownloadUrlRef.current = data.downloadUrl
-        setFullCrawlStatus('done')
-        return
-      }
-
-      if (!data.runId) { setFullCrawlStatus('failed'); return }
-      setFullCrawlStatus('pending')
-
-      const encodedUrl = encodeURIComponent(inputUrl)
-      pollIntervalRef.current = setInterval(async () => {
-        try {
-          const statusRes = await fetchWorker(`/api/crawl/js/status/${data.runId}?url=${encodedUrl}`)
-          if (!statusRes.ok) return
-          const statusData = await statusRes.json() as {
-            status: string
-            downloadUrl?: string
-            zip?: string
-            progress?: { phase: string; downloaded: number; total: number } | null
-          }
-
-          if (statusData.progress) setFullCrawlProgress(statusData.progress)
-
-          if (statusData.status === 'done') {
-            clearInterval(pollIntervalRef.current!)
-            if (statusData.downloadUrl) {
-              fullDownloadUrlRef.current = statusData.downloadUrl
-            } else if (statusData.zip) {
-              const binary = atob(statusData.zip)
-              const arr = new Uint8Array(binary.length)
-              for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i)
-              fullZipRef.current = new Blob([arr], { type: 'application/zip' })
-            }
-            setFullCrawlStatus('done')
-          } else if (statusData.status === 'failed') {
-            clearInterval(pollIntervalRef.current!)
-            setFullCrawlStatus('failed')
-          }
-        } catch { /* keep polling */ }
-      }, 5000)
-    } catch {
-      setFullCrawlStatus('failed')
-    }
-  }
-
-  function downloadFullZip() {
-    if (fullDownloadUrlRef.current) {
-      const a = document.createElement('a')
-      a.href = fullDownloadUrlRef.current
-      a.download = `site-full-${new URL(inputUrl).hostname}.zip`
-      a.click()
-      return
-    }
-    if (!fullZipRef.current) return
+  function downloadRenderZip() {
+    if (!renderStatus?.downloadUrl) return
     const a = document.createElement('a')
-    a.href = URL.createObjectURL(fullZipRef.current)
-    a.download = `site-full-${new URL(inputUrl).hostname}.zip`
+    a.href = renderStatus.downloadUrl
+    a.download = `site-render-${new URL(inputUrl).hostname}.zip`
     a.click()
-    URL.revokeObjectURL(a.href)
   }
 
   useEffect(() => {
@@ -283,6 +242,14 @@ function CrawlPage() {
   }, [])
 
   useEffect(() => {
+    // 恢复进行中的渲染任务（刷新/重开页面）；否则按 ?url= 自动开跑
+    const saved = loadCrawlState()
+    if (saved?.mode === 'render' && saved.renderTaskId && saved.status === 'running') {
+      setInputUrl(saved.url)
+      setStatus('running')
+      startRenderPolling(saved.renderTaskId, saved.url)
+      return
+    }
     if (url && status === 'idle') startCrawl(url)
   }, [])
 
@@ -296,10 +263,9 @@ function CrawlPage() {
     setTotalBytes(undefined)
     setJsWarning(false)
     setProgress({ downloaded: 0, queued: 0, bytes: 0 })
-    setFullCrawlStatus('idle')
-    fullZipRef.current = null
-    fullDownloadUrlRef.current = null
-    setFullCrawlProgress(null)
+    setRenderStatus(null)
+    setRenderNotice(null)
+    renderTaskIdRef.current = null
     if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null }
     startCrawl(inputUrl)
   }
@@ -394,10 +360,9 @@ function CrawlPage() {
                 totalBytes={totalBytes}
                 jsWarning={jsWarning}
                 onDownload={downloadZip}
-                onFullCrawl={startFullCrawl}
-                fullCrawlStatus={fullCrawlStatus}
-                fullCrawlProgress={fullCrawlProgress}
-                onDownloadFull={fullCrawlStatus === 'done' ? downloadFullZip : undefined}
+                renderStatus={renderStatus}
+                renderNotice={renderNotice}
+                onDownloadRender={downloadRenderZip}
               />
             ) : (
               <div className="rounded-lg border border-dashed border-[var(--sc-border)] bg-[var(--sc-card)] p-8">
