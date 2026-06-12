@@ -45,11 +45,23 @@ describe('decodeEntities / tryResolve', () => {
   it('解码常见实体', () => {
     expect(decodeEntities('&quot;x&quot;&amp;&apos;y&apos;')).toBe('"x"&\'y\'')
   })
+  it('解码数字字符引用（十进制）', () => {
+    expect(decodeEntities('&#34;')).toBe('"')
+    expect(decodeEntities('&#39;')).toBe("'")
+  })
+  it('解码数字字符引用（带前导零）', () => {
+    expect(decodeEntities('&#034;')).toBe('"')
+    expect(decodeEntities('&#039;')).toBe("'")
+  })
   it('tryResolve 过滤非 http 与无效 URL，去 hash', () => {
     const base = new URL('https://a.com/page/')
     expect(tryResolve('../x.png#frag', base)).toBe('https://a.com/x.png')
     expect(tryResolve('data:image/png;base64,xx', base)).toBeNull()
     expect(tryResolve('javascript:void(0)', base)).toBeNull()
+  })
+  it('tryResolve 过滤 blob: URL', () => {
+    const base = new URL('https://a.com/page/')
+    expect(tryResolve('blob:https://a.com/abc-123', base)).toBeNull()
   })
 })
 
@@ -69,6 +81,7 @@ describe('rewriteHtml / rewriteCss', () => {
     ['https://a.com/', 'index.html'],
     ['https://a.com/css/main.css', 'css/main.css'],
     ['https://a.com/img/bg.png', 'img/bg.png'],
+    ['https://a.com/img/bg@2x.png', 'img/bg@2x.png'],
     ['https://a.com/about/', 'about/index.html'],
   ])
   it('重写 href 与内联 url() 为相对路径', () => {
@@ -82,6 +95,14 @@ describe('rewriteHtml / rewriteCss', () => {
     const css = 'body{background:url(/img/bg.png)}'
     const out = dec(rewriteCss(enc(css), 'https://a.com/css/main.css', urlToPath))
     expect(out).toContain('url(../img/bg.png)')
+  })
+  it('重写 srcset 中多个候选 URL（含描述符）', () => {
+    const html = '<img srcset="https://a.com/img/bg.png 1x, https://a.com/img/bg@2x.png 2x">'
+    const out = dec(rewriteHtml(enc(html), 'https://a.com/', urlToPath))
+    expect(out).toContain('img/bg.png 1x')
+    expect(out).toContain('img/bg@2x.png 2x')
+    expect(out).not.toContain('https://a.com/img/bg.png')
+    expect(out).not.toContain('https://a.com/img/bg@2x.png')
   })
   it('未下载的 URL 保持原样', () => {
     const html = '<img src="https://other.com/x.png">'
