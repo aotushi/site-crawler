@@ -4,6 +4,9 @@ import { renderConfig } from './config'
 import { stageObject, isStaticAssetResponse } from './staging'
 import { normalizeLinks } from '../crawl/shared'
 
+// 步骤返回值上限 1MiB：10 页/批 × 200 链接 × ~200 字节 URL ≈ 400KB，留足余量
+const MAX_LINKS_PER_PAGE = 200
+
 export interface RenderBatchInput {
   urls: string[]
   startOrigin: string
@@ -80,8 +83,8 @@ export async function renderBatch(env: Env, taskId: string, input: RenderBatchIn
         const rawLinks = (await page.evaluate(
           `Array.from(document.querySelectorAll('a[href]')).map(a => a.href)`,
         )) as string[]
-        // 截断到 maxPages：超出部分对 BFS 无意义，且控制 Workflow step 返回值体积（≤1MiB）
-        links = normalizeLinks(rawLinks, input.startOrigin).slice(0, cfg.maxPages)
+        // 截断到 MAX_LINKS_PER_PAGE：超出部分对 BFS 无意义，且控制 Workflow step 返回值体积（≤1MiB）
+        links = normalizeLinks(rawLinks, input.startOrigin).slice(0, MAX_LINKS_PER_PAGE)
         if (!ok && html.length > 0) ok = true // 超时但已有内容 → 降级收录
       } catch {
         ok = false

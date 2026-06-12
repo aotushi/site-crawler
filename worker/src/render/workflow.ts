@@ -155,8 +155,9 @@ export class RenderCrawlWorkflow extends WorkflowEntrypoint<Env, RenderParams> {
           created_at: Date.now(),
         })
         if (userId) {
+          // 用 taskId 作历史记录 id，step 重试时幂等，避免重复插入
           await createCrawlRecord(this.env.DB, {
-            id: crypto.randomUUID(),
+            id: taskId,
             user_id: userId,
             url,
             status: 'done',
