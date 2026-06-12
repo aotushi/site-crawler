@@ -50,13 +50,14 @@ export async function renderBatch(env: Env, taskId: string, input: RenderBatchIn
             const ct = ((res.headers()['content-type'] ?? '').split(';')[0] ?? '').trim()
             if (!isStaticAssetResponse(resUrl, ct)) return
             if (stagedUrls.has(resUrl)) return
+            // 在 await 前占位，防止同一 URL 的并发响应重复入库
+            stagedUrls.add(resUrl)
             const body = await res.buffer()
             // check 与累加之间无 await，单线程下原子，不会超额
             if (bytesAdded + body.byteLength > input.byteBudgetLeft || objectsAdded + 1 > input.objectBudgetLeft) {
               budgetExhausted = true
               return
             }
-            stagedUrls.add(resUrl)
             bytesAdded += body.byteLength
             objectsAdded += 1
             await stageObject(env.CRAWL_BUCKET, taskId, resUrl, new Uint8Array(body), ct)
@@ -99,13 +100,16 @@ export async function renderBatch(env: Env, taskId: string, input: RenderBatchIn
         ok = false
       }
 
+      // 超时路径下响应事件可能在 allSettled 之后继续到达，先摘除监听器再等待
+      page.removeAllListeners('response')
       await Promise.allSettled(capturePromises)
       await page.close()
       pages.push({ url, ok, links })
       if (budgetExhausted) break
     }
   } finally {
-    await browser.close()
+    // close 自身的异常不应掩盖原始错误
+    await browser.close().catch(() => {})
   }
 
   return { pages, bytesAdded, objectsAdded, secondsUsed: (Date.now() - t0) / 1000, budgetExhausted }
