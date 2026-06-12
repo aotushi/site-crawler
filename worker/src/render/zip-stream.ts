@@ -31,6 +31,7 @@ export async function* zipChunks(files: AsyncIterable<ZipFileSource>): AsyncGene
       entry.push(new Uint8Array(0), true)
     } else {
       for (let off = 0; off < file.data.byteLength; off += SLICE) {
+        if (state.error) throw state.error  // fflate 在 push 中同步报错时立即终止，避免继续喂已失效的流
         const end = Math.min(off + SLICE, file.data.byteLength)
         entry.push(file.data.subarray(off, end), end === file.data.byteLength)
         yield* drain()
@@ -80,6 +81,7 @@ export async function uploadChunked(
       }
     }
     // 最后一片；全空内容时也要至少传一片才能 complete
+    // parts.length === 0 兜底分支在 zipChunks 源下不可达（zip 至少含 ~22B 中央目录）；纯防御保留
     if (fill > 0 || parts.length === 0) {
       parts.push(await target.uploadPart(partNumber++, buf.subarray(0, fill)))
       totalBytes += fill
