@@ -106,7 +106,8 @@ export async function zipStaging(
   async function* sources(): AsyncGenerator<ZipFileSource> {
     for (const e of entries) {
       const body = await bucket.get(e.key)
-      if (!body) continue
+      // 暂存对象缺失说明不变量被破坏，抛出让 step 重试而非产出残缺 zip
+      if (!body) throw new Error(`staged object missing: ${e.key}`)
       let data: Uint8Array = new Uint8Array((await body.arrayBuffer()) as ArrayBuffer)
       if (e.contentType.includes('text/html')) data = rewriteHtml(data, e.url, urlToPath)
       else if (e.contentType.includes('text/css')) data = rewriteCss(data, e.url, urlToPath)

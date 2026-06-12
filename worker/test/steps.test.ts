@@ -111,4 +111,17 @@ describe('zipStaging', () => {
     const css = new TextDecoder().decode(out['css/main.css'])
     expect(css).toContain('url(../img/bg.png)')
   })
+
+  it('R2 get 返回 null 时抛出而非静默跳过', async () => {
+    const bucket = new FakeBucket()
+    const b = asBucket(bucket)
+    await stageObject(b, 't2', 'https://a.com/', new TextEncoder().encode('<h1>hi</h1>'), 'text/html')
+
+    // 模拟 list 可见但 get 缺失的不一致
+    const broken = Object.create(bucket) as FakeBucket
+    broken.get = async () => null
+    const brokenB = asBucket(broken)
+    await expect(zipStaging(brokenB, 't2', 'https://a.com/', 'crawls/broken.zip'))
+      .rejects.toThrow(/staged object missing/)
+  })
 })
