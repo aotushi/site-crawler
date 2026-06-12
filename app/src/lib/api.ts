@@ -13,3 +13,25 @@ export async function fetchWorker(path: string, init: RequestInit = {}): Promise
   }
   return fetch(`${BASE}${path}`, { ...init, headers })
 }
+
+// 渲染任务状态（GET /api/crawl/render/:taskId 响应）
+export interface RenderStatus {
+  status: 'queued' | 'running' | 'done' | 'partial' | 'failed'
+  phase: 'discovering' | 'rendering' | 'assets' | 'zipping' | null
+  pagesDone: number
+  pagesTotal: number | null
+  bytes: number
+  downloadUrl?: string
+  error?: string
+  failedPages: string[]
+}
+
+export async function getRenderStatus(taskId: string): Promise<RenderStatus | null> {
+  try {
+    const res = await fetchWorker(`/api/crawl/render/${taskId}`)
+    if (!res.ok) return null
+    return await res.json() as RenderStatus
+  } catch {
+    return null // 网络抖动等：调用方保持轮询
+  }
+}
