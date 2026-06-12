@@ -30,8 +30,10 @@ export async function createUser(db: D1Database, user: User): Promise<void> {
 }
 
 export async function createCrawlRecord(db: D1Database, record: CrawlRecord): Promise<void> {
+  // OR IGNORE：渲染链路 finalize step 用 taskId 作主键，重试/replay 时第二次插入静默跳过；
+  // 静态车道 id 为随机 UUID 不会撞键，行为不变
   await db.prepare(
-    'INSERT INTO crawl_history (id, user_id, url, status, file_count, zip_size, created_at, completed_at, gh_run_id, crawl_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT OR IGNORE INTO crawl_history (id, user_id, url, status, file_count, zip_size, created_at, completed_at, gh_run_id, crawl_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     record.id, record.user_id, record.url, record.status,
     record.file_count, record.zip_size, record.created_at, record.completed_at,
