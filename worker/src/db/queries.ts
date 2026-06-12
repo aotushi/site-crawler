@@ -86,23 +86,18 @@ export async function checkAndIncrementIpUsage(
   crawlType: 'static' | 'js' | 'render',
   limit: number,
 ): Promise<boolean> {
+  // limit=0 直接拒绝（如 dailyLimitAnon=0 时完全禁止匿名渲染）
+  if (limit <= 0) return false
+
   const date = new Date().toISOString().slice(0, 10) // YYYY-MM-DD UTC
-  // 先 upsert 确保行存在
-  await db.prepare(
-    'INSERT INTO ip_usage (ip, crawl_type, date, count) VALUES (?, ?, ?, 0) ON CONFLICT(ip, crawl_type, date) DO NOTHING'
-  ).bind(ip, crawlType, date).run()
+  // 原子自增+上限校验，消除并发读改写竞态
+  // ip_usage 以 (ip, crawl_type, date) 为复合主键；
+  // 首次插入 count=1；已存在时仅在 count < limit 时自增，否则 changes=0 → 超限
+  const result = await db.prepare(
+    'INSERT INTO ip_usage (ip, crawl_type, date, count) VALUES (?, ?, ?, 1) ON CONFLICT(ip, crawl_type, date) DO UPDATE SET count = count + 1 WHERE count < ?'
+  ).bind(ip, crawlType, date, limit).run()
 
-  const row = await db.prepare(
-    'SELECT count FROM ip_usage WHERE ip = ? AND crawl_type = ? AND date = ?'
-  ).bind(ip, crawlType, date).first<{ count: number }>()
-
-  const current = row?.count ?? 0
-  if (current >= limit) return false
-
-  await db.prepare(
-    'UPDATE ip_usage SET count = count + 1 WHERE ip = ? AND crawl_type = ? AND date = ?'
-  ).bind(ip, crawlType, date).run()
-  return true
+  return result.meta.changes > 0
 }
 
 export interface RenderTask {

@@ -7,7 +7,7 @@ import { renderConfig } from '../render/config'
 import { checkBudget } from '../render/quota'
 import {
   createCrawlRecord, updateCrawlRecord, checkAndIncrementIpUsage,
-  getCrawlCache, setCrawlCache, createRenderTask,
+  getCrawlCache, setCrawlCache, createRenderTask, updateRenderTask,
 } from '../db/queries'
 
 function sseEvent(event: string, data: unknown): string {
@@ -63,6 +63,7 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
   ;(async () => {
     // 提升到 try 外：catch 里要用它标记失败（仅静态链路会赋值）
     let recordId: string | null = null
+    let renderTaskId: string | null = null
     try {
       const urlHash = await sha16('static:' + url)
 
@@ -79,7 +80,10 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
       }
 
       // ---- V2 分流：入口 HTML 探测 SPA ----
-      const entry = await fetchUrl(url)
+      // 探测加 10s 超时与 4MB 上限，防止挂起/超大响应拖死 SSE 流
+      const probeAc = new AbortController()
+      const probeTimer = setTimeout(() => probeAc.abort(), 10_000)
+      const entry = await fetchUrl(url, { signal: probeAc.signal, maxBytes: 4 * 1024 * 1024 }).finally(() => clearTimeout(probeTimer))
       const entryCt = entry?.contentType ?? ''
       const entryHtml = entry && (entryCt.includes('text/html') || entryCt.includes('application/xhtml'))
         ? new TextDecoder().decode(entry.data)
@@ -114,6 +118,7 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
             user_id: user?.sub ?? null,
             created_at: Date.now(),
           })
+          renderTaskId = taskId
           await env.RENDER_WORKFLOW.create({ id: taskId, params: { taskId, url, userId: user?.sub ?? null } })
           await writer.write(enc.encode(sseEvent('render_task', { taskId })))
           return
@@ -178,6 +183,10 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
       const msg = e instanceof Error ? e.message : 'Crawl failed'
       if (user && recordId) {
         await updateCrawlRecord(env.DB, recordId, { status: 'failed', completed_at: Date.now() })
+      }
+      // 工作流启动失败时标记任务失败，避免前端永久轮询
+      if (renderTaskId) {
+        await updateRenderTask(env.DB, renderTaskId, { status: 'failed', error: msg }).catch(() => {})
       }
       await writer.write(enc.encode(sseEvent('error', { error: msg })))
     } finally {

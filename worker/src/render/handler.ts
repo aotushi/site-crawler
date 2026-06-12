@@ -23,6 +23,7 @@ export async function handleRenderStatus(
     bytes: task.bytes,
     downloadUrl: downloadable ? `${env.R2_PUBLIC_BASE}/${task.r2_key}` : undefined,
     error: task.error ?? undefined,
-    failedPages: task.failed_pages ? JSON.parse(task.failed_pages) : [],
+    // 容忍脏数据，解析失败按空数组处理
+    failedPages: (() => { try { return task.failed_pages ? JSON.parse(task.failed_pages) : [] } catch { return [] } })(),
   }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 }

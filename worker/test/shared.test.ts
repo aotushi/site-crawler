@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createHash } from 'node:crypto'
 import {
   sha16, urlToZipPath, relPath, decodeEntities, tryResolve,
-  rewriteHtml, rewriteCss, normalizeLinks,
+  rewriteHtml, rewriteCss, normalizeLinks, fetchUrl,
 } from '../src/crawl/shared'
 
 const enc = (s: string) => new TextEncoder().encode(s)
@@ -73,6 +73,36 @@ describe('normalizeLinks', () => {
       'https://b.com/x',
       'not a url',
     ], 'https://a.com')).toEqual(['https://a.com/about'])
+  })
+})
+
+describe('fetchUrl maxBytes', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('Content-Length 超限时返回 null 且取消响应体', async () => {
+    const cancelFn = vi.fn()
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: (h: string) => h === 'Content-Length' ? '5000000' : null },
+      body: { cancel: cancelFn },
+      arrayBuffer: vi.fn(),
+    }))
+    const result = await fetchUrl('https://example.com', { maxBytes: 4 * 1024 * 1024 })
+    expect(result).toBeNull()
+    expect(cancelFn).toHaveBeenCalled()
+  })
+
+  it('Content-Length 未超限时正常返回数据', async () => {
+    const buf = new ArrayBuffer(8)
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: (h: string) => h === 'Content-Length' ? '8' : 'text/html' },
+      body: { cancel: vi.fn() },
+      arrayBuffer: vi.fn().mockResolvedValue(buf),
+    }))
+    const result = await fetchUrl('https://example.com', { maxBytes: 4 * 1024 * 1024 })
+    expect(result).not.toBeNull()
+    expect(result?.data).toBeInstanceOf(Uint8Array)
   })
 })
 

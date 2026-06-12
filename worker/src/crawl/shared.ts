@@ -161,7 +161,10 @@ export function rewriteCss(data: Uint8Array, cssUrl: string, urlToPath: Map<stri
 }
 
 // 带浏览器请求头抓取单个 URL；非 2xx/网络错误返回 null
-export async function fetchUrl(url: string): Promise<{ data: Uint8Array; contentType: string } | null> {
+export async function fetchUrl(
+  url: string,
+  opts?: { signal?: AbortSignal; maxBytes?: number },
+): Promise<{ data: Uint8Array; contentType: string } | null> {
   try {
     const res = await fetch(url, {
       // 使用真实浏览器请求头，避免 SiteCrawlerBot 之类自曝身份被 WAF 直接拦截
@@ -171,8 +174,17 @@ export async function fetchUrl(url: string): Promise<{ data: Uint8Array; content
         'Accept-Language': 'en-US,en;q=0.9',
       },
       redirect: 'follow',
+      signal: opts?.signal,
     })
     if (!res.ok) return null
+    // 仅探测场景启用：按 Content-Length 拒绝超大响应，避免整段缓冲 OOM
+    if (opts?.maxBytes !== undefined) {
+      const cl = Number(res.headers.get('Content-Length') ?? 0)
+      if (cl > opts.maxBytes) {
+        res.body?.cancel()
+        return null
+      }
+    }
     const buf = await res.arrayBuffer()
     const data = new Uint8Array(buf)
     const contentType = res.headers.get('Content-Type') ?? ''
