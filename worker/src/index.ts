@@ -8,9 +8,17 @@ export interface Env {
   DB: D1Database
   JWT_SECRET: string
   FRONTEND_ORIGIN: string
-  GITHUB_TOKEN: string
+  GITHUB_TOKEN: string  // GHA 链路遗留，Task 11 移除
   CRAWL_BUCKET: R2Bucket
   R2_PUBLIC_BASE: string
+  BROWSER: Fetcher
+  RENDER_WORKFLOW: Workflow
+  RENDER_MONTHLY_BUDGET_S?: string
+  RENDER_MAX_PAGES?: string
+  RENDER_MAX_BYTES?: string
+  RENDER_PAGE_TIMEOUT_MS?: string
+  RENDER_BATCH_SIZE?: string
+  RENDER_DAILY_LIMIT_ANON?: string
 }
 
 export default {
