@@ -1,7 +1,7 @@
 import { isJsRendered } from './detector'
 import { parseAssets, parseCssUrls } from './parser'
 import { buildZip, ZipEntry } from './zipper'
-import { urlToZipPath, rewriteHtml, rewriteCss, fetchUrl, collectSitemapUrls } from './shared'
+import { urlToZipPath, rewriteHtml, rewriteCss, fetchUrl, fetchUrlWithTimeout, collectSitemapUrls } from './shared'
 
 export interface CrawlResult {
   zip: Uint8Array
@@ -24,6 +24,7 @@ const MAX_FILES = 900
 const MAX_BYTES = 100 * 1024 * 1024  // 100 MB
 const MAX_DEPTH = 5
 const POOL_CONCURRENCY = 6  // 并发工作池大小，控制子请求突发与内存峰值
+const FETCH_TIMEOUT_MS = 20_000  // 单请求超时：挂死连接到点 abort，避免拖死并发池
 
 export async function crawlSite(startUrl: string, onProgress?: ProgressCallback): Promise<CrawlResult> {
   const startOrigin = new URL(startUrl).origin
@@ -61,7 +62,7 @@ export async function crawlSite(startUrl: string, onProgress?: ProgressCallback)
     if (limitReached()) return
     visited.add(task.url)
 
-    const result = await fetchUrl(task.url)
+    const result = await fetchUrlWithTimeout(task.url, FETCH_TIMEOUT_MS)
     if (!result) return
 
     // 字节硬限额：超限则丢弃该文件，不计入

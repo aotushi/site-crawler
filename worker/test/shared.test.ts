@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createHash } from 'node:crypto'
 import {
   sha16, urlToZipPath, relPath, decodeEntities, tryResolve,
-  rewriteHtml, rewriteCss, normalizeLinks, fetchUrl,
+  rewriteHtml, rewriteCss, normalizeLinks, fetchUrl, fetchUrlWithTimeout,
 } from '../src/crawl/shared'
 
 const enc = (s: string) => new TextEncoder().encode(s)
@@ -103,6 +103,27 @@ describe('fetchUrl maxBytes', () => {
     const result = await fetchUrl('https://example.com', { maxBytes: 4 * 1024 * 1024 })
     expect(result).not.toBeNull()
     expect(result?.data).toBeInstanceOf(Uint8Array)
+  })
+})
+
+describe('fetchUrlWithTimeout', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('超时触发 abort → 返回 null', async () => {
+    // fetch 永不 resolve，只在 signal abort 时 reject（模拟挂死连接）
+    vi.stubGlobal('fetch', vi.fn((_u: unknown, init?: { signal?: AbortSignal }) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+      })))
+    const result = await fetchUrlWithTimeout('https://slow.example', 10)
+    expect(result).toBeNull()
+  })
+
+  it('超时前正常响应照常返回数据', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () =>
+      new Response('ok', { status: 200, headers: { 'Content-Type': 'text/html' } })))
+    const result = await fetchUrlWithTimeout('https://fast.example', 1000)
+    expect(result?.contentType).toContain('text/html')
   })
 })
 

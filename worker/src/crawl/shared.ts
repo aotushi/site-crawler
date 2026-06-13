@@ -194,6 +194,22 @@ export async function fetchUrl(
   }
 }
 
+// 带超时的单请求抓取：到点 abort，fetchUrl 的 catch 捕获后返回 null。
+// 复用 fetchUrl 的 signal 透传，调用方拿到 null 走既有「抓取失败」分支即可。
+export async function fetchUrlWithTimeout(
+  url: string,
+  timeoutMs: number,
+  opts?: { maxBytes?: number },
+): Promise<{ data: Uint8Array; contentType: string } | null> {
+  const ac = new AbortController()
+  const timer = setTimeout(() => ac.abort(), timeoutMs)
+  try {
+    return await fetchUrl(url, { signal: ac.signal, maxBytes: opts?.maxBytes })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 // 拉取站点 sitemap，返回同源页面 URL 列表（支持 sitemapindex 两层）
 export async function collectSitemapUrls(origin: string): Promise<string[]> {
   const decode = (d: Uint8Array) => new TextDecoder().decode(d)
