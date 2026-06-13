@@ -122,13 +122,16 @@ export class RenderCrawlWorkflow extends WorkflowEntrypoint<Env, RenderParams> {
           const slice = missing.slice(i, i + 100)
           const bytesBefore = bytes
           const objectsBefore = objects
-          const r = await step.do(`fetch-assets-${assetIndex++}`, async () =>
-            fetchAssetBatch(
+          const r = await step.do(`fetch-assets-${assetIndex++}`, async () => {
+            const out = await fetchAssetBatch(
               this.env.CRAWL_BUCKET, taskId, slice,
               cfg.maxBytes - bytesBefore,
               RENDER_MAX_OBJECTS - objectsBefore,
-            ),
-          )
+            )
+            // 每批补抓后刷新 updated_at 心跳，避免长资源阶段被 30 分钟逃生口误判死
+            await updateRenderTask(this.env.DB, taskId, { phase: 'assets', bytes: bytesBefore + out.bytesAdded })
+            return out
+          })
           bytes += r.bytesAdded
           objects += r.objectsAdded
           if (r.budgetExhausted) capHit = true

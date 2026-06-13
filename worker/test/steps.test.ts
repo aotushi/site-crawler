@@ -97,6 +97,28 @@ describe('fetchAssetBatch', () => {
     expect(r.budgetExhausted).toBe(false) // 单资源超限是跳过，不是预算耗尽
     expect((await bucket.list({ prefix: 'render/t1/raw/' })).objects).toHaveLength(0)
   })
+  it('单资源挂死时到点超时跳过，不阻塞整批', async () => {
+    // good 正常返回；hang 永不 resolve，仅在 abort 时 reject
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL, init?: { signal?: AbortSignal }) => {
+      const url = String(input)
+      if (url === 'https://a.com/good.png') {
+        return Promise.resolve(new Response(new Uint8Array([1, 2, 3]), {
+          status: 200, headers: { 'Content-Type': 'image/png' },
+        }))
+      }
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+      })
+    }))
+    const bucket = new FakeBucket()
+    const r = await fetchAssetBatch(asBucket(bucket), 't1', [
+      'https://a.com/hang.png',
+      'https://a.com/good.png',
+    ], 1024, 10, 10)
+    expect(r.objectsAdded).toBe(1)       // 只有 good 入暂存
+    expect(r.bytesAdded).toBe(3)
+    expect((await bucket.list({ prefix: 'render/t1/raw/' })).objects).toHaveLength(1)
+  })
 })
 
 describe('zipStaging', () => {

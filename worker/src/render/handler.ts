@@ -1,8 +1,8 @@
 import type { Env } from '../index'
 import { getRenderTask, updateRenderTask } from '../db/queries'
 
-// 无心跳超时阈值：远大于单 step 间隔（一批 10 页渲染 + 重试退避也只在分钟级），
-// updated_at（毫秒时间戳，updateRenderTask 每次写入 Date.now()）超过该时长未刷新即视为 workflow 已死
+// 无心跳超时阈值：discover/render-batch/补抓各批均会 updateRenderTask 刷新 updated_at（毫秒时间戳），
+// 单批耗时在分钟级（10 页渲染或 ≤100 资源 ×6 并发 ×20s 超时上限）。超过该时长未刷新即视为 workflow 已死
 const RENDER_STALE_MS = 30 * 60 * 1000
 
 // GET /api/crawl/render/:taskId — 渲染任务状态轮询

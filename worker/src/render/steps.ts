@@ -1,4 +1,4 @@
-import { sha16, urlToZipPath, rewriteHtml, rewriteCss, fetchUrl, collectSitemapUrls, normalizeLinks } from '../crawl/shared'
+import { sha16, urlToZipPath, rewriteHtml, rewriteCss, fetchUrlWithTimeout, collectSitemapUrls, normalizeLinks } from '../crawl/shared'
 import { parseAssets, parseCssUrls } from '../crawl/parser'
 import { listStaging, stageObject, isStaticAssetResponse, ASSET_MAX_BYTES } from './staging'
 import { zipChunks, uploadChunked, ZipFileSource } from './zip-stream'
@@ -46,6 +46,7 @@ export interface FetchAssetsResult {
 }
 
 const FETCH_CONCURRENCY = 6
+const ASSET_FETCH_TIMEOUT_MS = 20_000  // 单资源补抓超时，对齐 V1 静态链路
 
 // 直连补抓缺失资源（渲染时未触发加载的图片/字体等），按响应 Content-Type 过滤
 export async function fetchAssetBatch(
@@ -54,6 +55,7 @@ export async function fetchAssetBatch(
   urls: string[],
   byteBudgetLeft: number,
   objectBudgetLeft: number,
+  timeoutMs = ASSET_FETCH_TIMEOUT_MS,
 ): Promise<FetchAssetsResult> {
   let bytesAdded = 0
   let objectsAdded = 0
@@ -62,8 +64,8 @@ export async function fetchAssetBatch(
   for (let i = 0; i < urls.length && !budgetExhausted; i += FETCH_CONCURRENCY) {
     const slice = urls.slice(i, i + FETCH_CONCURRENCY)
     await Promise.all(slice.map(async (url) => {
-      // 单资源体积上限：超限时 fetchUrl 返回 null，走下方跳过分支
-      const res = await fetchUrl(url, { maxBytes: ASSET_MAX_BYTES })
+      // 单资源体积超限或抓取超时/失败时 fetchUrlWithTimeout 返回 null，走下方跳过分支
+      const res = await fetchUrlWithTimeout(url, timeoutMs, { maxBytes: ASSET_MAX_BYTES })
       if (!res) return
       const ct = ((res.contentType || '').split(';')[0] ?? '').trim()
       if (!isStaticAssetResponse(url, ct)) return
