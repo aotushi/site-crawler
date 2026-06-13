@@ -102,6 +102,19 @@ export async function checkAndIncrementIpUsage(
   return result.meta.changes > 0
 }
 
+// 退还当日 IP 配额：原子递减，count > 0 守卫防越界到负数。
+// 与 checkAndIncrementIpUsage 用同一 UTC 日期键，仅在确认已扣额后调用。
+export async function decrementIpUsage(
+  db: D1Database,
+  ip: string,
+  crawlType: 'static' | 'js' | 'render',
+): Promise<void> {
+  const date = new Date().toISOString().slice(0, 10) // YYYY-MM-DD UTC
+  await db.prepare(
+    'UPDATE ip_usage SET count = count - 1 WHERE ip = ? AND crawl_type = ? AND date = ? AND count > 0'
+  ).bind(ip, crawlType, date).run()
+}
+
 export interface RenderTask {
   id: string
   url: string

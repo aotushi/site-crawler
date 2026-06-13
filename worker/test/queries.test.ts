@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createCrawlRecord, CrawlRecord } from '../src/db/queries'
+import { createCrawlRecord, CrawlRecord, decrementIpUsage } from '../src/db/queries'
 
 // 测试环境是纯 vitest（无 vitest-pool-workers），没有可执行真实 SQL 的 D1 实例，
 // 故用极简替身仅模拟 SQLite 主键冲突语义：
@@ -67,5 +67,31 @@ describe('createCrawlRecord', () => {
     await createCrawlRecord(asD1(db), record('a'))
     await createCrawlRecord(asD1(db), record('b'))
     expect(db.rows.size).toBe(2)
+  })
+})
+
+// 仅记录最后一次 prepare 的 sql 与 bind 参数，支持 UPDATE（现有 FakeD1 只认 INSERT）
+class FakeD1Recorder {
+  last?: { sql: string; params: unknown[] }
+  prepare(sql: string) {
+    const self = this
+    return {
+      bind(...params: unknown[]) {
+        return { async run() { self.last = { sql, params }; return { meta: { changes: 1 } } } }
+      },
+    }
+  }
+}
+const asD1Rec = (db: FakeD1Recorder) => db as unknown as D1Database
+
+describe('decrementIpUsage', () => {
+  it('发出原子递减 UPDATE，带 count > 0 守卫与 (ip, render, date) 参数', async () => {
+    const db = new FakeD1Recorder()
+    await decrementIpUsage(asD1Rec(db), '1.2.3.4', 'render')
+    expect(db.last!.sql).toMatch(/UPDATE ip_usage SET count = count - 1/)
+    expect(db.last!.sql).toMatch(/count > 0/)
+    expect(db.last!.params).toContain('1.2.3.4')
+    expect(db.last!.params).toContain('render')
+    expect(db.last!.params).toContain(new Date().toISOString().slice(0, 10)) // 与扣额同一 UTC 日期键
   })
 })

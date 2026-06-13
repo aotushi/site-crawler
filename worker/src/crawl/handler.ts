@@ -6,7 +6,7 @@ import { fetchUrl, sha16 } from './shared'
 import { renderConfig } from '../render/config'
 import { checkBudget } from '../render/quota'
 import {
-  createCrawlRecord, updateCrawlRecord, checkAndIncrementIpUsage,
+  createCrawlRecord, updateCrawlRecord, checkAndIncrementIpUsage, decrementIpUsage,
   getCrawlCache, setCrawlCache, createRenderTask, updateRenderTask,
 } from '../db/queries'
 
@@ -64,6 +64,7 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
     // 提升到 try 外：catch 里要用它标记失败（仅静态链路会赋值）
     let recordId: string | null = null
     let renderTaskId: string | null = null
+    let renderQuotaCharged = false  // 匿名渲染额度是否已预扣（用于失败退还）
     try {
       const urlHash = await sha16('static:' + url)
 
@@ -106,8 +107,11 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
 
         // 熔断检查在配额消耗之前：预算已死时不浪费匿名每日渲染额度
         const budget = await checkBudget(env.DB, cfg.monthlyBudgetSeconds)
-        const renderAllowed = budget.allowed
-          && (user ? true : await checkAndIncrementIpUsage(env.DB, ip, 'render', cfg.dailyLimitAnon))
+        let renderAllowed = budget.allowed
+        if (renderAllowed && !user) {
+          renderQuotaCharged = await checkAndIncrementIpUsage(env.DB, ip, 'render', cfg.dailyLimitAnon)
+          renderAllowed = renderQuotaCharged
+        }
 
         if (renderAllowed) {
           const taskId = crypto.randomUUID()
@@ -187,6 +191,10 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
       // 工作流启动失败时标记任务失败，避免前端永久轮询
       if (renderTaskId) {
         await updateRenderTask(env.DB, renderTaskId, { status: 'failed', error: msg }).catch(() => {})
+      }
+      // 渲染未真正启动 → 退还预扣的匿名当日额度
+      if (renderQuotaCharged) {
+        await decrementIpUsage(env.DB, ip, 'render').catch(() => {})
       }
       await writer.write(enc.encode(sseEvent('error', { error: msg })))
     } finally {
