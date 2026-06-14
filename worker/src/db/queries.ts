@@ -9,7 +9,7 @@ export interface CrawlRecord {
   id: string
   user_id: string
   url: string
-  status: 'running' | 'done' | 'failed'
+  status: 'running' | 'done' | 'partial' | 'failed'
   file_count: number | null
   zip_size: number | null
   created_at: number

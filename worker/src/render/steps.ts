@@ -118,7 +118,7 @@ export async function zipStaging(
     }
   }
 
-  const upload = await bucket.createMultipartUpload(zipKey)
+  const upload = await bucket.createMultipartUpload(zipKey, { httpMetadata: { contentType: 'application/zip' } })
   const target = {
     uploadPart: async (partNumber: number, data: Uint8Array) => {
       const p = await upload.uploadPart(partNumber, data)

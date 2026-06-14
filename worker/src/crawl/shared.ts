@@ -17,7 +17,7 @@ export async function sha16(input: string): Promise<string> {
 // 跨域资源放到 _external/<host>/ 下，避免与同源资源路径碰撞
 export function urlToZipPath(url: string, startOrigin: string): string {
   const parsed = new URL(url)
-  let path = parsed.pathname.replace(/^\//, '') || 'index.html'
+  let path = parsed.pathname.replace(/^\/+/, '') || 'index.html'
   if (path.endsWith('/')) {
     path += 'index.html'
   } else {

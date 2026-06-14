@@ -28,6 +28,10 @@ describe('urlToZipPath', () => {
   it('跨域资源置于 _external/<host>/ 下', () => {
     expect(urlToZipPath('https://cdn.b.com/img.png', origin)).toBe('_external/cdn.b.com/img.png')
   })
+  it('折叠多个前导斜杠', () => {
+    expect(urlToZipPath('https://a.com//foo', origin)).toBe('foo/index.html')
+    expect(urlToZipPath('https://a.com///foo', origin)).toBe('foo/index.html')
+  })
 })
 
 describe('relPath', () => {

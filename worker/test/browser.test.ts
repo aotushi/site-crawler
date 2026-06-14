@@ -28,21 +28,21 @@ function fakeResponse(url: string, headers: Record<string, string>, body: Uint8A
 }
 
 // 假 page：goto 时把预设响应逐个推给监听器，content 返回固定 HTML
-function fakePage(responses: FakeResponse[]) {
+function fakePage(responses: FakeResponse[], links = [] as string[]) {
   const listeners: ((res: FakeResponse) => void)[] = []
   return {
     on: (_event: string, cb: (res: FakeResponse) => void) => { listeners.push(cb) },
     goto: async () => { for (const r of responses) for (const cb of [...listeners]) cb(r) },
     content: async () => '<html><body>hi</body></html>',
-    evaluate: async () => [] as string[],
+    evaluate: async () => links,
     removeAllListeners: () => { listeners.length = 0 },
     close: async () => {},
   }
 }
 
-function setupBrowser(responses: FakeResponse[]) {
+function setupBrowser(responses: FakeResponse[], links = [] as string[]) {
   currentBrowser = {
-    newPage: async () => fakePage(responses),
+    newPage: async () => fakePage(responses, links),
     close: async () => {},
   }
 }
@@ -78,6 +78,14 @@ describe('renderBatch 响应截获的单资源体积上限', () => {
     const staged = (await bucket.list({ prefix: stagingPrefix('t1') })).objects
     expect(staged).toHaveLength(2)
     expect(r.pages[0].ok).toBe(true)
+  })
+
+  it('超长链接被丢弃，不撑大 step 返回值', async () => {
+    const longUrl = 'https://a.com/' + 'x'.repeat(3000)
+    setupBrowser([], ['https://a.com/ok', longUrl])
+    const r = await renderBatch(fakeEnv(new FakeBucket()), 't1', input)
+    expect(r.pages[0].links).toContain('https://a.com/ok')
+    expect(r.pages[0].links).not.toContain(longUrl)
   })
 
   it('无 Content-Length（chunked）时先缓冲，超限则丢弃不入暂存', async () => {

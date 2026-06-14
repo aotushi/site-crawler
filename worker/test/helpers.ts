@@ -1,6 +1,7 @@
 // 内存版 R2Bucket 测试替身：覆盖本项目用到的 put/get/list/delete/createMultipartUpload
 export class FakeBucket {
   store = new Map<string, { data: Uint8Array; customMetadata?: Record<string, string> }>()
+  multipartOptions = new Map<string, { httpMetadata?: { contentType?: string } }>()
 
   async put(
     key: string,
@@ -39,7 +40,8 @@ export class FakeBucket {
     for (const k of Array.isArray(keys) ? keys : [keys]) this.store.delete(k)
   }
 
-  async createMultipartUpload(key: string) {
+  async createMultipartUpload(key: string, options?: { httpMetadata?: { contentType?: string } }) {
+    this.multipartOptions.set(key, options ?? {})
     const parts = new Map<number, Uint8Array>()
     const store = this.store
     return {

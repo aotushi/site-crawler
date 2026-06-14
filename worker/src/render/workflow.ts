@@ -163,7 +163,7 @@ export class RenderCrawlWorkflow extends WorkflowEntrypoint<Env, RenderParams> {
             id: taskId,
             user_id: userId,
             url,
-            status: 'done',
+            status,
             file_count: zipped.files,
             zip_size: zipped.zipBytes,
             created_at: Date.now(),

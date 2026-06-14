@@ -147,6 +147,14 @@ describe('zipStaging', () => {
     expect(css).toContain('url(../img/bg.png)')
   })
 
+  it('zip 以 application/zip 上传', async () => {
+    const bucket = new FakeBucket()
+    const b = asBucket(bucket)
+    await stageObject(b, 't3', 'https://a.com/', new TextEncoder().encode('<h1>hi</h1>'), 'text/html')
+    await zipStaging(b, 't3', 'https://a.com/', 'crawls/render-ct.zip')
+    expect(bucket.multipartOptions.get('crawls/render-ct.zip')?.httpMetadata?.contentType).toBe('application/zip')
+  })
+
   it('R2 get 返回 null 时抛出而非静默跳过', async () => {
     const bucket = new FakeBucket()
     const b = asBucket(bucket)
