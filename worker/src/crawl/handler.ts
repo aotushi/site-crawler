@@ -65,6 +65,7 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
     let recordId: string | null = null
     let renderTaskId: string | null = null
     let renderQuotaCharged = false  // 匿名渲染额度是否已预扣（用于失败退还）
+    let renderWorkflowStarted = false  // 工作流是否已成功创建；已启动则由其自管生命周期，不退额度
     try {
       const urlHash = await sha16('static:' + url)
 
@@ -124,6 +125,7 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
           })
           renderTaskId = taskId
           await env.RENDER_WORKFLOW.create({ id: taskId, params: { taskId, url, userId: user?.sub ?? null } })
+          renderWorkflowStarted = true  // create 已 resolve，此后即便推送 SSE 失败也不退额度（渲染照常消耗预算）
           await writer.write(enc.encode(sseEvent('render_task', { taskId })))
           return
         }
@@ -192,8 +194,8 @@ export async function handleCrawl(request: Request, env: Env, corsHeaders: Recor
       if (renderTaskId) {
         await updateRenderTask(env.DB, renderTaskId, { status: 'failed', error: msg }).catch(() => {})
       }
-      // 渲染未真正启动 → 退还预扣的匿名当日额度
-      if (renderQuotaCharged) {
+      // 渲染未真正启动 → 退还预扣的匿名当日额度（已启动则工作流会消耗预算，不能退）
+      if (renderQuotaCharged && !renderWorkflowStarted) {
         await decrementIpUsage(env.DB, ip, 'render').catch(() => {})
       }
       await writer.write(enc.encode(sseEvent('error', { error: msg })))
