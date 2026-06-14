@@ -11,7 +11,7 @@ export function HomeBenefits() {
       items: [
         ['bolt', '边缘并发抓取', 'Worker 在服务端并行拉取 HTML、CSS、JS、图片和字体,减少浏览器等待时间。'],
         ['account_tree', '链接关系保真', '解析页面内引用并重写相对路径,让 ZIP 解压后仍能本地打开和审查。'],
-        ['javascript', 'JS 渲染兜底', '检测到动态渲染时,可切换 GitHub Actions + Playwright 完整抓取链路。'],
+        ['javascript', 'JS 渲染兜底', '检测到动态渲染时,可切换 Cloudflare Workflows + Browser Run 完整抓取链路。'],
         ['database', '历史可追踪', '登录后保留每次任务状态、文件数量、体积和下载链接,方便复核。'],
         ['shield_lock', '配额与限流', '匿名和登录用户走不同配额,避免共享服务被单一来源拖垮。'],
         ['folder_zip', '交付物清晰', '最终输出 ZIP,适合迁移、备份、法务留存或离线验收。'],
@@ -24,7 +24,7 @@ export function HomeBenefits() {
       items: [
         ['bolt', 'Edge parallel crawl', 'Workers fetch HTML, CSS, JS, images, and fonts server-side to reduce browser wait time.'],
         ['account_tree', 'Link fidelity', 'Page references are parsed and relative paths are rewritten so the ZIP opens locally.'],
-        ['javascript', 'JS-render fallback', 'When dynamic rendering is detected, the job can escalate to GitHub Actions + Playwright.'],
+        ['javascript', 'JS-render fallback', 'When dynamic rendering is detected, the job can escalate to Cloudflare Workflows + Browser Run.'],
         ['database', 'Traceable history', 'Signed-in users keep status, file counts, package size, and download links for review.'],
         ['shield_lock', 'Quota controls', 'Anonymous and signed-in users use separate limits to protect the shared service.'],
         ['folder_zip', 'Clean deliverable', 'The final ZIP fits migration, backup, legal retention, and offline acceptance workflows.'],

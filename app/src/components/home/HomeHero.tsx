@@ -19,7 +19,7 @@ export function HomeHero() {
       staticLimit: '静态链路',
       staticValue: '200 文件 / 50MB',
       jsFallback: 'JS 兜底',
-      jsValue: 'Playwright Actions',
+      jsValue: 'Browser Run',
       delivery: '交付',
       deliveryValue: 'ZIP + 历史记录',
       inputLabel: '目标 URL',
@@ -33,7 +33,7 @@ export function HomeHero() {
       ],
       stat1: '平均 30 秒内完成常规站点',
       stat2: 'Cloudflare Worker 边缘执行',
-      stat3: '可升级到 Playwright 完整渲染',
+      stat3: '可升级到 Browser Run 云端渲染',
     },
     en: {
       eyebrow: 'EDGE ARCHIVE PIPELINE',
@@ -44,7 +44,7 @@ export function HomeHero() {
       staticLimit: 'Static lane',
       staticValue: '200 files / 50MB',
       jsFallback: 'JS fallback',
-      jsValue: 'Playwright Actions',
+      jsValue: 'Browser Run',
       delivery: 'Delivery',
       deliveryValue: 'ZIP + history',
       inputLabel: 'Target URL',
@@ -58,7 +58,7 @@ export function HomeHero() {
       ],
       stat1: 'Most standard sites finish under 30s',
       stat2: 'Runs on Cloudflare Worker edge',
-      stat3: 'Escalates to full Playwright rendering',
+      stat3: 'Escalates to Browser Run cloud rendering',
     },
   }[lang]
 

@@ -8,6 +8,8 @@ export interface CrawlState {
   fileCount?: number
   totalBytes?: number
   jsWarning?: boolean
+  mode?: 'static' | 'render'  // 缺省视为 static（兼容旧存量数据）
+  renderTaskId?: string
 }
 
 export function saveCrawlState(state: CrawlState): void {

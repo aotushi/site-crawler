@@ -2,15 +2,24 @@ import { handleRegister, handleLogin } from './auth/handlers'
 import { verifyToken, extractBearer } from './auth/jwt'
 import { getCrawlHistory } from './db/queries'
 import { handleCrawl } from './crawl/handler'
-import { handleJsTrigger, handleJsStatus } from './crawl/js-handler'
+import { handleRenderStatus } from './render/handler'
+
+export { RenderCrawlWorkflow } from './render/workflow'
 
 export interface Env {
   DB: D1Database
   JWT_SECRET: string
   FRONTEND_ORIGIN: string
-  GITHUB_TOKEN: string
   CRAWL_BUCKET: R2Bucket
   R2_PUBLIC_BASE: string
+  BROWSER: Fetcher
+  RENDER_WORKFLOW: Workflow
+  RENDER_MONTHLY_BUDGET_S?: string
+  RENDER_MAX_PAGES?: string
+  RENDER_MAX_BYTES?: string
+  RENDER_PAGE_TIMEOUT_MS?: string
+  RENDER_BATCH_SIZE?: string
+  RENDER_DAILY_LIMIT_ANON?: string
 }
 
 export default {
@@ -44,12 +53,9 @@ export default {
     if (pathname === '/api/auth/login' && request.method === 'POST') {
       return handleLogin(request, env)
     }
-    if (pathname === '/api/crawl/js/trigger' && request.method === 'POST') {
-      return handleJsTrigger(request, env, corsHeaders)
-    }
-    const jsStatusMatch = pathname.match(/^\/api\/crawl\/js\/status\/(\d+)$/)
-    if (jsStatusMatch && request.method === 'GET') {
-      return handleJsStatus(request, env, corsHeaders, jsStatusMatch[1])
+    const renderStatusMatch = pathname.match(/^\/api\/crawl\/render\/([0-9a-f-]{36})$/)
+    if (renderStatusMatch && request.method === 'GET') {
+      return handleRenderStatus(env, corsHeaders, renderStatusMatch[1])
     }
     if (pathname === '/api/crawl' && request.method === 'POST') {
       return handleCrawl(request, env, corsHeaders)

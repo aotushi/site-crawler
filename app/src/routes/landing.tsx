@@ -37,29 +37,29 @@ const copy: Record<Lang, LandingCopy> = {
   zh: {
     eyebrow: 'Technical Showcase · SEO Engineering',
     title: 'SiteCrawler 技术架构展示',
-    subtitle: '一个基于 Cloudflare Pages、Workers、D1、R2 与 GitHub Actions 的网站归档系统，覆盖静态资源抓取、JS 渲染完整爬取、SSE 进度反馈、登录历史与 SEO 工程配置。',
+    subtitle: '一个基于 Cloudflare Pages、Workers、D1、R2 与 Browser Run 的网站归档系统，覆盖静态资源抓取、JS 渲染完整爬取、SSE 进度反馈、登录历史与 SEO 工程配置。',
     primaryCta: '开始爬取',
     secondaryCta: '查看首页',
     stats: [
       { label: '前端', value: 'React + Vite' },
-      { label: '边缘 API', value: 'Hono + Workers' },
+      { label: '边缘 API', value: 'Cloudflare Workers' },
       { label: '存储', value: 'D1 + R2' },
-      { label: '重任务', value: 'GitHub Actions' },
+      { label: '重任务', value: 'Browser Run' },
     ],
     architectureTitle: 'Architecture Overview',
-    architectureDesc: '轻任务在 Worker 边缘节点完成，重型 JS 渲染任务交给 GitHub Actions，最终通过 R2 和 D1 沉淀可下载结果与用户历史。',
+    architectureDesc: '轻任务在 Worker 边缘节点完成，重型 JS 渲染由 Cloudflare Workflows 编排、在 Browser Run 云端浏览器中执行，最终通过 R2 和 D1 沉淀可下载结果与用户历史。',
     flow: [
       { label: 'User URL', detail: '用户输入目标站点' },
       { label: 'Worker API', detail: '校验、限流、SSE 推送' },
       { label: 'Crawler Core', detail: '静态抓取与链接重写' },
-      { label: 'GitHub Actions', detail: 'Playwright 完整渲染' },
+      { label: 'Browser Run', detail: 'Workflows 编排云端渲染' },
       { label: 'R2 + D1', detail: 'ZIP 存储与历史索引' },
       { label: 'Download', detail: '浏览器下载归档包' },
     ],
     capabilityTitle: '核心工程能力',
     capabilities: [
       { icon: 'travel_explore', title: '静态网站爬取', description: '解析 HTML、CSS、图片、字体和脚本资源，保留目录结构并重写相对路径。', badge: 'Crawler' },
-      { icon: 'terminal', title: 'JS 完整爬取', description: '复杂 SPA 和动态站点交由 GitHub Actions + Playwright 处理，避免 Worker 执行时间限制。', badge: 'Playwright' },
+      { icon: 'terminal', title: 'JS 完整爬取', description: '复杂 SPA 和动态站点交由 Cloudflare Workflows + Browser Run 处理，避免 Worker 执行时间限制。', badge: 'Browser Run' },
       { icon: 'sync_alt', title: 'SSE 进度反馈', description: '爬取过程中流式返回文件数量、队列状态和资源大小，用户无需等待黑盒任务结束。', badge: 'SSE' },
       { icon: 'history', title: '登录历史记录', description: 'JWT 登录后将任务结果写入 D1，R2 保存完整 ZIP，支持后续重新下载。', badge: 'D1' },
     ],
@@ -74,7 +74,7 @@ const copy: Record<Lang, LandingCopy> = {
     stackTitle: 'Cloudflare Stack',
     stackItems: [
       { icon: 'public', title: 'Cloudflare Pages', description: '承载 React 前端，静态资源由全球 CDN 分发。', badge: 'Frontend' },
-      { icon: 'cloud', title: 'Workers API', description: 'Hono API 处理爬取请求、鉴权、限流与 SSE 响应。', badge: 'Edge' },
+      { icon: 'cloud', title: 'Workers API', description: 'Worker 处理爬取请求、鉴权、限流与 SSE 响应。', badge: 'Edge' },
       { icon: 'database', title: 'D1 Database', description: '保存用户、任务、历史记录和结果索引。', badge: 'SQLite' },
       { icon: 'deployed_code', title: 'R2 Object Storage', description: '持久化 ZIP 结果，避免大文件压入数据库。', badge: 'Object' },
     ],
@@ -82,7 +82,7 @@ const copy: Record<Lang, LandingCopy> = {
     deployItems: [
       { name: 'crawler.9shi.cc', desc: '前端应用，Cloudflare Pages 托管', state: 'Live' },
       { name: 'api.9shi.cc/crawler/*', desc: 'Worker API，负责爬取与任务状态', state: 'Live' },
-      { name: 'GitHub Actions', desc: 'JS 渲染完整爬取的异步执行环境', state: 'Async' },
+      { name: 'Browser Run + Workflows', desc: 'JS 渲染完整爬取的异步执行环境', state: 'Async' },
     ],
     finalTitle: '从产品功能到工程展示',
     finalDesc: '这个页面用于把 SiteCrawler 从单一工具升级为可讲清楚架构、部署、SEO 和边缘计算取舍的求职项目资产。',
@@ -90,29 +90,29 @@ const copy: Record<Lang, LandingCopy> = {
   en: {
     eyebrow: 'Technical Showcase · SEO Engineering',
     title: 'SiteCrawler Architecture Showcase',
-    subtitle: 'A web archiving system built on Cloudflare Pages, Workers, D1, R2, and GitHub Actions, covering static asset crawling, JavaScript-rendered full crawls, SSE progress, authenticated history, and SEO engineering.',
+    subtitle: 'A web archiving system built on Cloudflare Pages, Workers, D1, R2, and Browser Run, covering static asset crawling, JavaScript-rendered full crawls, SSE progress, authenticated history, and SEO engineering.',
     primaryCta: 'Start Crawling',
     secondaryCta: 'View Home',
     stats: [
       { label: 'Frontend', value: 'React + Vite' },
-      { label: 'Edge API', value: 'Hono + Workers' },
+      { label: 'Edge API', value: 'Cloudflare Workers' },
       { label: 'Storage', value: 'D1 + R2' },
-      { label: 'Heavy Jobs', value: 'GitHub Actions' },
+      { label: 'Heavy Jobs', value: 'Browser Run' },
     ],
     architectureTitle: 'Architecture Overview',
-    architectureDesc: 'Lightweight work runs on the Worker edge runtime. Heavy JavaScript rendering is offloaded to GitHub Actions, while R2 and D1 store downloadable results and user history.',
+    architectureDesc: 'Lightweight work runs on the Worker edge runtime. Heavy JavaScript rendering is orchestrated by Cloudflare Workflows and run in Browser Run, while R2 and D1 store downloadable results and user history.',
     flow: [
       { label: 'User URL', detail: 'Target site input' },
       { label: 'Worker API', detail: 'Validation, limits, SSE' },
       { label: 'Crawler Core', detail: 'Static crawl and rewrite' },
-      { label: 'GitHub Actions', detail: 'Playwright rendering' },
+      { label: 'Browser Run', detail: 'Workflows-orchestrated render' },
       { label: 'R2 + D1', detail: 'ZIP storage and index' },
       { label: 'Download', detail: 'Browser ZIP delivery' },
     ],
     capabilityTitle: 'Core Engineering Capabilities',
     capabilities: [
       { icon: 'travel_explore', title: 'Static Site Crawling', description: 'Parses HTML, CSS, images, fonts, and scripts while preserving folder structure and rewriting relative paths.', badge: 'Crawler' },
-      { icon: 'terminal', title: 'Full JS Crawl', description: 'Complex SPAs are handled by GitHub Actions and Playwright to avoid Worker runtime limits.', badge: 'Playwright' },
+      { icon: 'terminal', title: 'Full JS Crawl', description: 'Complex SPAs are handled by Cloudflare Workflows and Browser Run to avoid Worker runtime limits.', badge: 'Browser Run' },
       { icon: 'sync_alt', title: 'SSE Progress', description: 'Streams file counts, queue state, and asset size so the user can follow a running crawl.', badge: 'SSE' },
       { icon: 'history', title: 'Authenticated History', description: 'JWT users get D1-backed task history and R2-backed ZIP downloads for later access.', badge: 'D1' },
     ],
@@ -127,7 +127,7 @@ const copy: Record<Lang, LandingCopy> = {
     stackTitle: 'Cloudflare Stack',
     stackItems: [
       { icon: 'public', title: 'Cloudflare Pages', description: 'Hosts the React frontend with global CDN delivery.', badge: 'Frontend' },
-      { icon: 'cloud', title: 'Workers API', description: 'Hono API handles crawl requests, auth, rate limits, and SSE responses.', badge: 'Edge' },
+      { icon: 'cloud', title: 'Workers API', description: 'The Worker handles crawl requests, auth, rate limits, and SSE responses.', badge: 'Edge' },
       { icon: 'database', title: 'D1 Database', description: 'Stores users, jobs, history records, and result indexes.', badge: 'SQLite' },
       { icon: 'deployed_code', title: 'R2 Object Storage', description: 'Persists ZIP files without pushing large binaries into the database.', badge: 'Object' },
     ],
@@ -135,7 +135,7 @@ const copy: Record<Lang, LandingCopy> = {
     deployItems: [
       { name: 'crawler.9shi.cc', desc: 'Frontend app hosted on Cloudflare Pages', state: 'Live' },
       { name: 'api.9shi.cc/crawler/*', desc: 'Worker API for crawl and task state', state: 'Live' },
-      { name: 'GitHub Actions', desc: 'Async runtime for full JavaScript rendering', state: 'Async' },
+      { name: 'Browser Run + Workflows', desc: 'Async runtime for full JavaScript rendering', state: 'Async' },
     ],
     finalTitle: 'From Product Feature to Engineering Story',
     finalDesc: 'This page turns SiteCrawler from a utility into a job-search asset that explains architecture, deployment, SEO, and edge-computing tradeoffs.',
@@ -207,7 +207,7 @@ function LandingPage() {
             <div className="mb-5 flex items-center justify-between border-b border-[#3d3a39] pb-4">
               <div>
                 <p className="text-sm font-semibold text-white">Runtime Map</p>
-                <p className="text-xs text-slate-400">Pages → Workers → Actions → R2/D1</p>
+                <p className="text-xs text-slate-400">Pages → Workers → Browser Run → R2/D1</p>
               </div>
               <MaterialIcon name="hub" className="text-[#00d992]" />
             </div>
