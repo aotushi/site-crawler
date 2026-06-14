@@ -70,7 +70,7 @@ site-crawler/
 | 前端框架 | TanStack Router v1 + React 19 + Vite 5 |
 | 样式 | TailwindCSS v4 + Material Design color tokens |
 | 字体 | 系统字体栈（Inter 移除）+ @material-symbols/font-400（自托管） |
-| 后端运行时 | Cloudflare Workers（Hono） |
+| 后端运行时 | Cloudflare Workers |
 | 数据库 | Cloudflare D1（SQLite） |
 | 文件存储 | Cloudflare R2 |
 | JS 渲染 | Cloudflare Browser Run + Workflows |
@@ -83,7 +83,7 @@ site-crawler/
 
 | 功能 | 说明 |
 |------|------|
-| 静态爬取 | SSE 流式进度，最大 200 文件 / 50MB，深度 2 层 |
+| 静态爬取 | SSE 流式进度，最大 900 文件 / 100MB，深度 5 层 |
 | JS 渲染爬取 | 单入口自动分流：先按静态抓取入口页，检测到 SPA（JS 渲染壳）时自动创建渲染任务，由 Workflows 在云端浏览器中逐批渲染全站、截获静态资源、打包 ZIP 存 R2；前端通过 SSE 收到任务号后轮询状态 |
 | IP 限流 | 未登录：静态 3次/天，渲染 1次/天 |
 | 用户系统 | 登录/注册（V1 注册入口占位，弹窗提示"即将上线"） |

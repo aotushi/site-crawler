@@ -44,7 +44,7 @@ export const messages = {
     crawl_download: "下载 ZIP",
     crawl_files: "已抓取文件",
     crawl_size: "打包大小",
-    crawl_js_warning: "检测到该网站依赖 JavaScript 动态渲染，内容可能不完整。建议改用本地 Playwright 工具进行完整抓取。",
+    crawl_js_warning: "检测到该网站依赖 JavaScript 动态渲染，已自动转入云端浏览器渲染抓取，请等待渲染任务完成。",
     crawl_render_queued: "渲染任务排队中",
     crawl_render_running: "云端渲染进行中",
     crawl_render_phase_discovering: "发现页面中",
@@ -214,7 +214,7 @@ export const messages = {
     crawl_files: "Files fetched",
     crawl_size: "ZIP size",
     crawl_js_warning:
-      "This site appears to require JavaScript rendering. Content may be incomplete. Consider using Playwright locally for a full crawl.",
+      "This site relies on JavaScript rendering. It has been routed to cloud browser rendering automatically — please wait for the render task to finish.",
     crawl_render_queued: "Render task queued",
     crawl_render_running: "Cloud rendering in progress",
     crawl_render_phase_discovering: "Discovering pages",
