@@ -14,7 +14,7 @@ export function HomeIntegrations() {
         ['javascript', 'JavaScript', '脚本资源与 SPA 渲染兜底'],
         ['image', '媒体资源', 'JPG、PNG、WEBP、SVG 等'],
         ['cloud', 'Cloudflare', 'Pages、Workers、D1、R2'],
-        ['terminal', 'GitHub Actions', 'Playwright 完整抓取任务'],
+        ['web', 'Browser Run', '云端浏览器完整抓取任务'],
       ],
     },
     en: {
@@ -27,7 +27,7 @@ export function HomeIntegrations() {
         ['javascript', 'JavaScript', 'Script assets and SPA render fallback'],
         ['image', 'Media assets', 'JPG, PNG, WEBP, SVG, and more'],
         ['cloud', 'Cloudflare', 'Pages, Workers, D1, and R2'],
-        ['terminal', 'GitHub Actions', 'Full Playwright crawl jobs'],
+        ['web', 'Browser Run', 'Full cloud-browser crawl jobs'],
       ],
     },
   }[lang]

@@ -5,11 +5,11 @@ export function HomeFaq() {
   const { lang, t } = useLang()
   const extra = {
     zh: [
-      ['什么时候需要 JS 完整爬取?', '当首屏内容由浏览器执行 JavaScript 后才出现,或静态链路提示内容可能不完整时,应使用 Playwright 完整爬取。'],
+      ['什么时候需要 JS 完整爬取?', '当首屏内容由浏览器执行 JavaScript 后才出现,或静态链路提示内容可能不完整时,应使用云端浏览器 (Browser Run) 完整爬取。'],
       ['ZIP 可以直接部署吗?', '大多数静态站点可以直接检查和部署,但如果原站依赖服务端接口、登录态或反爬策略,仍需要人工复核。'],
     ],
     en: [
-      ['When should I use the full JS crawl?', 'Use Playwright full crawl when key content appears only after browser-side JavaScript runs, or when the static lane warns that output may be incomplete.'],
+      ['When should I use the full JS crawl?', 'Use the Browser Run full crawl when key content appears only after browser-side JavaScript runs, or when the static lane warns that output may be incomplete.'],
       ['Can the ZIP be deployed directly?', 'Most static sites can be reviewed and deployed directly, but sites depending on server APIs, auth state, or anti-bot behavior still need manual review.'],
     ],
   }[lang]
