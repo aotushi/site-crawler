@@ -179,9 +179,9 @@ CREATE TABLE IF NOT EXISTS render_usage (
 **本地集成**:`wrangler dev`(Workflows + browser binding 本地用本机 Chromium)爬本地 SPA demo,验证全链路。
 
 **部署后验收**:
-1. SPA 完整 copy:默认候选 `https://demo.realworld.io`(Conduit React SPA,用户可换):全部可发现路由入 ZIP、动态内容在 HTML 内、离线首屏正确。
-2. 中型动态站 `https://www.dripulse.com`:页面覆盖 ≥ V1,渲染注入内容可见。
-3. 静态站回归:走 V1 管线,行为不变。
+1. 静态站回归（已定生产验收目标 `https://www.engineeredabrasives.com`）:走 V1 静态管线,队列推进、产物 zip 可下载、`crawl_history` 落库 status=done。
+2. SPA 完整 copy（⏳ 待办,目标 URL 待定,不用示例站）:全部可发现路由入 ZIP、动态内容在 HTML 内、离线首屏正确。
+3. 中型动态站（⏳ 待办,目标待定）:页面覆盖 ≥ V1,渲染注入内容可见。
 4. 熔断演练:临时调小 `RENDER_MONTHLY_BUDGET_S`,验证拒绝/降级/partial 三条路径。
 
 ## 15. 部署序列(操作已预授权,远程执行前知会)
