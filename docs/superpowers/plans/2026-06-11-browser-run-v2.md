@@ -3735,17 +3735,17 @@ Expected: 仓库归档成功（只读，保留历史）。
 
 在生产前端页面（Pages 域名）执行：
 
-1. 爬 `https://demo.realworld.io` → 渲染车道启动、进度推进、最终可下载 zip；
-2. 爬 `https://dripulse.com` → 静态车道正常；
-3. 检查远程用量已记账：
+1. **静态车道**：爬 `https://www.engineeredabrasives.com`（传统静态站）→ 实时队列推进、最终可下载 zip；登录态下 `crawl_history` 落一条 status=done 记录。
+2. **渲染车道（动态 / SPA 站）**：⏳ 待办 —— 目标 URL 待定（不用示例站），确定后再做生产验收；渲染链路已在 Task 14 本地端到端验过。
+3. 静态车道远程核对（登录态爬取后）：
 
 ```bash
 cd worker
 npx wrangler d1 execute site-crawler-db --remote --command \
-  "SELECT * FROM render_usage; SELECT id, url, status, pages_done, bytes FROM render_tasks ORDER BY created_at DESC LIMIT 3"
+  "SELECT id, url, status, file_count, zip_size FROM crawl_history ORDER BY created_at DESC LIMIT 3"
 ```
 
-Expected: render_usage 有当月行且 browser_seconds > 0；render_tasks 最新记录 status 为 done/partial。
+Expected: 最新记录为 www.engineeredabrasives.com、status=done、file_count/zip_size > 0。（静态车道不触发 Browser Run，故 render_usage.browser_seconds 不增；待渲染车道生产验收时再核 render_usage。）
 
 无代码改动，本任务无提交。
 
@@ -3823,7 +3823,7 @@ git commit -m "docs: README 更新为 V2 Browser Run 架构" -- README.md
 
 | 风险 | 影响 | 缓解 |
 |------|------|------|
-| Browser Run 本地模拟与生产行为差异（并发、版本） | 本地通过但线上渲染失败 | Task 15 生产验收必须实跑 demo.realworld.io；失败页记入 failed_pages 不阻塞整任务 |
+| Browser Run 本地模拟与生产行为差异（并发、版本） | 本地通过但线上渲染失败 | 渲染车道生产验收（⏳ 待办，SPA 目标待定）需实跑确认；失败页记入 failed_pages 不阻塞整任务 |
 | Workflows step 返回值 >1MiB（链接极多的页面） | step 失败重试 | browser.ts 链接 `.slice(0, maxPages)` 截断；批大小 10 控制单步体积 |
 | 单 step 子请求 ~1000 上限 | step 中途被掐 | RENDER_MAX_OBJECTS=850 预留余量，staging 计数含 R2 put |
 | 渲染中目标站拉黑 CF IP / 反爬 | 页面超时、空壳 | 15s 超时 + salvage `page.content()`；failed_pages 透出给用户 |
