@@ -186,16 +186,19 @@ npm run dev
 
 ## 部署
 
+> Worker 与前端经 **Cloudflare Workers Builds / Pages Git 集成**自动部署：合并到 `main` 即触发，无需手动跑 `wrangler deploy` / `pages deploy`。下方命令为手动备用 / 本地参考。
+> **例外**：自动部署不执行 D1 迁移，新增迁移须手动在远程跑一次。
+
 ```bash
-# 部署 Worker
+# 部署 Worker（通常由 Git 集成自动完成）
 cd worker
 npx wrangler deploy
 
-# V2 一次性初始化：D1 渲染任务表迁移 + R2 暂存前缀生命周期（render/ 7 天自动过期）
-npx wrangler d1 execute site-crawler-db --remote --file=src/db/migrations/004_add_render_tasks.sql
-npx wrangler r2 bucket lifecycle add site-crawler-results --prefix render/ --expire-days 7
+# V2 一次性初始化：D1 渲染任务表迁移（必须手动）+ R2 暂存前缀生命周期（render/ 7 天自动过期）
+npx wrangler d1 execute site-crawler-db --remote --file=src/db/migrations/004_add_render_tasks.sql  # ✅ 2026-06-16 已执行
+npx wrangler r2 bucket lifecycle add site-crawler-results --prefix render/ --expire-days 7           # ⏳ 待执行
 
-# 部署前端
+# 部署前端（通常由 Git 集成自动完成）
 cd app
 npm run build
 npx wrangler pages deploy dist --project-name=site-crawler
@@ -210,8 +213,9 @@ npx wrangler pages deploy dist --project-name=site-crawler
 - ✅ 中英双语 Landing Page（含真实案例展示模块）
 - ✅ Lighthouse 评分：Performance 98 / Accessibility 100 / Best Practices 100 / SEO 100
 - ✅ 字体全部自托管，无 Google Fonts 依赖（大陆可正常访问）
+- ✅ V2 生产部署：Worker + 前端经 Cloudflare Builds 自动部署，D1 远程迁移已完成（2026-06-16）
 - ⏳ 注册功能、更高配额（计划中）
-- ⏳ V2 生产部署与 GHA 仓库归档（待执行）
+- ⏳ 收尾项：R2 `render/` 7 天生命周期规则、GHA 仓库（aotushi/site-crawler-actions）归档
 
 ## 性能说明
 
