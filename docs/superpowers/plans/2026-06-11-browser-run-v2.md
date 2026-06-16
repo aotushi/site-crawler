@@ -3668,9 +3668,11 @@ Expected: 全部通过。
 
 ⚠️ 本任务含远程操作。用户已对本项目预授权（增删改查），但执行每条远程命令前先在回复里知会一声正在做什么。本地验证（Task 14）必须已全部通过。
 
+> **进度（2026-06-16）**：Step 1/3/5 完成 —— 远程 D1 迁移已手动补完；Worker 与前端由 Cloudflare Builds Git 集成在 PR #1 merge 后自动部署。剩 Step 2（R2 生命周期）、Step 4（删 GITHUB_TOKEN）、Step 6（GHA 归档）、Step 7（生产验收）。
+
 **Files:** 无（运维任务）
 
-- [ ] **Step 1: 远程 D1 迁移**
+- [x] **Step 1: 远程 D1 迁移** ✅ 2026-06-16 完成（实际文件 `src/db/migrations/004_add_render_tasks.sql`；因 wrangler.toml 无 `migrations_dir`，直接 `d1 execute --file` 而非 `migrations apply`，render_tasks/render_usage 两表已只读验证）
 
 ```bash
 cd worker
@@ -3692,7 +3694,7 @@ npx wrangler r2 bucket lifecycle list site-crawler-results
 
 Expected: 列表中出现 prefix=render/、expire 7 days 的规则。
 
-- [ ] **Step 3: 部署 worker**
+- [x] **Step 3: 部署 worker** ✅ 由 Cloudflare Workers Builds 自动部署（PR #1 merge 触发，版本 f5a1dbae），非手动 `wrangler deploy`
 
 ```bash
 cd worker
@@ -3711,7 +3713,7 @@ npx wrangler secret delete GITHUB_TOKEN
 
 Expected: 删除成功（若提示不存在也算通过）。
 
-- [ ] **Step 5: 部署前端**
+- [x] **Step 5: 部署前端** ✅ 由 Cloudflare Pages Git 集成自动部署（crawler.9shi.cc 返回 200）
 
 ```bash
 cd app
