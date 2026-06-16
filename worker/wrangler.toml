@@ -1,6 +1,7 @@
 name = "site-crawler-worker"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
 
 # 账户ID
 account_id = "eff602d8715ddb9bcf1b4ba8b2ca0788"
@@ -10,6 +11,9 @@ account_id = "eff602d8715ddb9bcf1b4ba8b2ca0788"
 # 故 worker route 绑在 origin-api 上（保留 /crawler 前缀，匹配 worker 内部路由）
 pattern = "origin-api.9shi.cc/crawler/*"
 zone_name = "9shi.cc"
+
+[browser]
+binding = "BROWSER"
 
 [[d1_databases]]
 binding = "DB"
@@ -24,13 +28,31 @@ bucket_name = "site-crawler-results"
 FRONTEND_ORIGIN = "https://crawler.9shi.cc"
 # 在 Cloudflare 控制台开启 R2 Public Access 后，将 pub-xxxx.r2.dev 替换为实际地址
 R2_PUBLIC_BASE = "https://pub-44d5bd19addb426db33a386e05369737.r2.dev"
+# 渲染链路配置（TOML vars 只能是字符串，config.ts 里 Number() 解析）
+RENDER_MONTHLY_BUDGET_S = "32400"
+RENDER_MAX_PAGES = "500"
+RENDER_MAX_BYTES = "943718400"
+RENDER_PAGE_TIMEOUT_MS = "15000"
+RENDER_BATCH_SIZE = "10"
+RENDER_DAILY_LIMIT_ANON = "1"
 
+# ⚠️ [env.dev] 不继承顶层 bindings/vars，必须逐项镜像
 [env.dev]
 port = 8787
+compatibility_flags = ["nodejs_compat"]
+
+[env.dev.browser]
+binding = "BROWSER"
 
 [env.dev.vars]
 FRONTEND_ORIGIN = "http://localhost:5173"
 R2_PUBLIC_BASE = "https://pub-44d5bd19addb426db33a386e05369737.r2.dev"
+RENDER_MONTHLY_BUDGET_S = "32400"
+RENDER_MAX_PAGES = "500"
+RENDER_MAX_BYTES = "943718400"
+RENDER_PAGE_TIMEOUT_MS = "15000"
+RENDER_BATCH_SIZE = "10"
+RENDER_DAILY_LIMIT_ANON = "1"
 
 [[env.dev.d1_databases]]
 binding = "DB"
@@ -40,6 +62,16 @@ database_id = "d79e138c-b877-456f-9389-e68afb2f7bcb"
 [[env.dev.r2_buckets]]
 binding = "CRAWL_BUCKET"
 bucket_name = "site-crawler-results"
+
+[[workflows]]
+name = "render-crawl"
+binding = "RENDER_WORKFLOW"
+class_name = "RenderCrawlWorkflow"
+
+[[env.dev.workflows]]
+name = "render-crawl"
+binding = "RENDER_WORKFLOW"
+class_name = "RenderCrawlWorkflow"
 
 # Secrets (set via wrangler secret put):
 # JWT_SECRET

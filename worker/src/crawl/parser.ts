@@ -1,18 +1,9 @@
 import { parse } from 'node-html-parser'
+import { decodeEntities } from './shared'
 
 export interface ParsedAssets {
   links: string[]   // same-origin HTML page links to follow
   assets: string[]  // static assets to download (CSS, JS, images, etc.)
-}
-
-// 解码属性值里常见的 HTML 实体（如内联 style 中的 &quot;），否则 url() 解析会被污染
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&quot;/g, '"')
-    .replace(/&#0*34;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#0*39;/g, "'")
-    .replace(/&amp;/g, '&')
 }
 
 // 从任意字符串（如 data-settings JSON）里兜底抽取直链媒体/资源 URL
